@@ -3,9 +3,8 @@
   "mcpServers": {
     "databricks-metric-view-checker": {
       "type": "stdio",
-      "command": "node",
+      "command": "./bin/checker.cmd",
       "args": [
-        "${PLUGIN_ROOT}/dist/checker.mjs",
         "mcp"
       ],
       "cwd": "${PLUGIN_ROOT}"

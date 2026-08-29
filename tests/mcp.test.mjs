@@ -23,10 +23,20 @@ test("copied package with spaces exposes and invokes the MCP tool", async () => 
   const mcp = JSON.parse(await readFile(join(isolated, "mcp.json"), "utf8"));
   const declared = mcp.mcpServers["databricks-metric-view-checker"];
   const expand = (value) => value.replaceAll("${PLUGIN_ROOT}", isolated);
+  assert.match(declared.command, /^\.\//, "bundled MCP commands must be plugin-relative");
+  const resolvedCommand = join(isolated, declared.command.slice(2));
+  const expandedArgs = declared.args.map(expand);
+  const environment = { ...process.env, PLUGIN_ROOT: isolated };
+  environment.DATABRICKS_METRIC_VIEW_SKIP_SYSTEM_NODE = "1";
+  environment.DATABRICKS_METRIC_VIEW_NODE =
+    process.platform === "win32" ? join(isolated, "mcp.json") : "/bin/false";
+  environment.DATABRICKS_METRIC_VIEW_HOST_RUNTIME = process.execPath;
+  if (process.platform !== "win32") environment.PATH = "/usr/bin:/bin";
   const transport = new StdioClientTransport({
-    command: declared.command,
-    args: declared.args.map(expand),
+    command: resolvedCommand,
+    args: expandedArgs,
     cwd: expand(declared.cwd),
+    env: environment,
     stderr: "pipe",
   });
   const client = new Client({ name: "acceptance-test", version: "1.0.0" });

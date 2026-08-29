@@ -104,3 +104,32 @@ test("skill updates existing views without silently resetting grants", async () 
     /CREATE OR REPLACE.*explicitly accepts.*does not preserve.*grants.*`table_id`/s,
   );
 });
+
+test("live deployment checks and preserves the exact submitted YAML", async () => {
+  const skill = await readFile(skillPath, "utf8");
+  const deployment = await readFile(
+    join(
+      root,
+      "plugins",
+      "databricks-metric-view",
+      "skills",
+      "databricks-metric-view",
+      "references",
+      "deployment.md",
+    ),
+    "utf8",
+  );
+
+  assert.match(skill, /read \[deployment\.md\].*before constructing or submitting any DDL/i);
+  assert.match(skill, /exact YAML payload that will appear between `\$\$` delimiters/);
+  assert.match(skill, /Submit one checked statement[\s\S]*rerun the local gate/s);
+  assert.match(skill, /permission, ownership, target-state, context, transport, timeout, or unknown-outcome failures/);
+  assert.match(skill, /bin\/checker\.cmd check/);
+  assert.match(deployment, /WITH METRICS[\s\S]*LANGUAGE YAML[\s\S]*AS \$\$/s);
+  assert.match(deployment, /Do not use `databricks experimental aitools tools query`/);
+  assert.match(deployment, /Only a deterministic YAML or DDL parser\/analyzer error[\s\S]*rerun the local checker/s);
+  assert.match(deployment, /DESCRIBE TABLE EXTENDED.*AS JSON[\s\S]*type is `METRIC_VIEW`[\s\S]*current principal owns it/s);
+  assert.match(deployment, /CREATE VIEW `<catalog>`\.`<schema>`\.`<view>`/);
+  assert.match(deployment, /catalog: \$catalog, schema: \$schema, statement: \./);
+  assert.match(deployment, /compare the complete tree[\s\S]*materialization/s);
+});

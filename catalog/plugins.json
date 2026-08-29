@@ -7,7 +7,7 @@
       "email": "60221874+MiguelElGallo@users.noreply.github.com"
     },
     "description": "Portable skills and tools for Databricks metric-view YAML.",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   "plugins": [
     {

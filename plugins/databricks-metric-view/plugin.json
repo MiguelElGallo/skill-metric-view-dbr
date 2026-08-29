@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "databricks-metric-view",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Author and preflight-check Databricks Unity Catalog metric-view YAML before submitting it to Databricks.",
   "author": {
     "name": "MiguelElGallo",

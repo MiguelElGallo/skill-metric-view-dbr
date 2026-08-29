@@ -7,7 +7,7 @@ import { validateMetricViewYaml } from "./validator.js";
 const HELP = `Databricks metric-view YAML checker
 
 Usage:
-  node checker.mjs check <file|-> [options]
+  checker.cmd check <file|-> [options]
 
 Options:
   --format <text|json>              Output format (default: text)
