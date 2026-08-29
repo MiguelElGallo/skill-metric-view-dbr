@@ -7434,7 +7434,9 @@ function parseRuntime(value) {
   if (!value) return void 0;
   const match = /^(\d+)(?:\.(\d+))?$/.exec(value.trim());
   if (!match) return void 0;
-  return [Number(match[1]), Number(match[2] ?? "0")];
+  const major = Number(match[1]);
+  const minor = match[2] === void 0 ? major >= 18 ? Number.POSITIVE_INFINITY : 0 : Number(match[2]);
+  return [major, minor];
 }
 function runtimeLessThan(actual, minimum) {
   const expected = parseRuntime(minimum);
@@ -8146,7 +8148,7 @@ function validateParameters(ctx, value, path) {
     defaultsStarted ||= hasDefault;
   });
 }
-function validateJoins(ctx, value, path, parentOneToMany = false) {
+function validateJoins(ctx, value, path, parentCardinality) {
   const joins = requireArray(ctx, value, path, "joins");
   if (!joins) return;
   const siblingNames = /* @__PURE__ */ new Map();
@@ -8183,16 +8185,16 @@ function validateJoins(ctx, value, path, parentOneToMany = false) {
     }
     if (hasOn) requireString(ctx, join.on, [...itemPath, "on"], "join.on");
     if (hasUsing) stringList(ctx, join.using, [...itemPath, "using"], "join.using");
-    let oneToMany = false;
+    let cardinality = "many_to_one";
     if (Object.hasOwn(join, "cardinality")) {
-      const cardinality = requireString(
+      const suppliedCardinality = requireString(
         ctx,
         join.cardinality,
         [...itemPath, "cardinality"],
         "join.cardinality"
       );
       ctx.feature([...itemPath, "cardinality"], "Join cardinality", "18.1", { yaml11: true });
-      if (cardinality && !["many_to_one", "one_to_many"].includes(cardinality)) {
+      if (suppliedCardinality && !["many_to_one", "one_to_many"].includes(suppliedCardinality)) {
         ctx.add(
           "INVALID_JOIN_CARDINALITY",
           "error",
@@ -8200,15 +8202,18 @@ function validateJoins(ctx, value, path, parentOneToMany = false) {
           "join.cardinality must be many_to_one or one_to_many.",
           { docsUrl: YAML_DOCS }
         );
+        cardinality = void 0;
+      } else if (suppliedCardinality) {
+        cardinality = suppliedCardinality;
       }
-      oneToMany = cardinality === "one_to_many";
     }
-    if (parentOneToMany && !oneToMany) {
+    if (parentCardinality && cardinality && parentCardinality !== cardinality) {
+      const parentIsOneToMany = parentCardinality === "one_to_many";
       ctx.add(
-        "ONE_TO_MANY_DESCENDANT_CARDINALITY",
+        parentIsOneToMany ? "ONE_TO_MANY_DESCENDANT_CARDINALITY" : "MANY_TO_ONE_DESCENDANT_CARDINALITY",
         "error",
         [...itemPath, "cardinality"],
-        "Every descendant of a one_to_many join must also declare cardinality: one_to_many.",
+        `Every join in this nested subtree must use cardinality: ${parentCardinality}. Top-level sibling branches may use different cardinalities.`,
         { docsUrl: YAML_DOCS }
       );
     }
@@ -8226,15 +8231,6 @@ function validateJoins(ctx, value, path, parentOneToMany = false) {
             { docsUrl: YAML_DOCS }
           );
         } else if (rely.at_most_one_match === true) {
-          if (oneToMany) {
-            ctx.add(
-              "CONTRADICTORY_JOIN_RELY",
-              "error",
-              [...itemPath, "rely", "at_most_one_match"],
-              "at_most_one_match: true contradicts cardinality: one_to_many.",
-              { docsUrl: YAML_DOCS }
-            );
-          }
           ctx.add(
             "JOIN_RELY_DATA_NOT_VALIDATED",
             "warning",
@@ -8247,7 +8243,7 @@ function validateJoins(ctx, value, path, parentOneToMany = false) {
     }
     if (Object.hasOwn(join, "joins")) {
       ctx.feature([...itemPath, "joins"], "Snowflake-schema nested joins", "17.3");
-      validateJoins(ctx, join.joins, [...itemPath, "joins"], parentOneToMany || oneToMany);
+      validateJoins(ctx, join.joins, [...itemPath, "joins"], cardinality);
     }
   });
 }

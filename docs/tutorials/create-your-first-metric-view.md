@@ -1,71 +1,57 @@
 # Create your first metric view
 
-In this tutorial, we will write a small definition over the Databricks sample orders table, check it locally, and prepare its SQL statement.
+In this tutorial, you will ask the skill to create a useful metric view, refine it, and explain what is ready. You will not connect to Databricks or deploy anything.
 
-The local steps are safe and need no Databricks connection. The final create command is shown but not run for you.
+## Before you start
 
-## Create the YAML file
+Install the plugin with [Install the skill in VS Code](../how-to/install-in-vscode.md), then open or create the writable project folder where you want the YAML saved.
 
-Save this as `orders_metrics.yml`:
+## Ask for the first draft
 
-```yaml
-version: 1.1
-source: samples.tpch.orders
-comment: Order counts and values grouped by status.
+Open VS Code Chat in Agent mode and paste:
 
-fields:
-  - name: order_status
-    expr: o_orderstatus
-    comment: Status code stored on the order.
+~~~text
+Use the databricks-metric-view skill.
 
-measures:
-  - name: order_count
-    expr: COUNT(*)
-    comment: Number of orders.
-  - name: total_order_value
-    expr: SUM(o_totalprice)
-    comment: Sum of the stored order total.
-```
+Create a Databricks metric view over samples.tpch.orders.
+- Use o_orderstatus as a field named order_status.
+- Add order_count as COUNT(*).
+- Add total_order_value as SUM(o_totalprice).
+- Use YAML version 1.1 for a SQL warehouse.
+- Save the result as orders-metric-view.yml.
 
-The repository includes the same definition in [examples/orders-metric-view.yml](../../examples/orders-metric-view.yml).
+Check the complete definition. Do not connect to Databricks and do not deploy.
+~~~
 
-We use names that describe the source columns without inventing business meaning.
+The source columns and calculations are explicit, so the skill does not have to guess their meaning.
 
-## Check it
+## Review the result
 
-Run:
+The skill should:
 
-```bash
-node plugins/databricks-metric-view/dist/checker.mjs check \
-  orders_metrics.yml \
-  --compute sql-warehouse
-```
+- create `orders-metric-view.yml`;
+- explain the fields and measures it added;
+- run its fast checks automatically;
+- distinguish a locally checked draft from a definition accepted by Databricks.
 
-The result should start with `PASS`. You have removed common YAML and structure mistakes before opening a warehouse.
+You do not need to run another command.
 
-## Prepare the Databricks statement
+## Refine the view
 
-Choose a catalog, schema, and unused view name. Then place the YAML inside this statement:
+Continue in the same chat:
 
-```sql
-CREATE VIEW my_catalog.my_schema.orders_metrics
-WITH METRICS
-LANGUAGE YAML
-AS $$
-version: 1.1
-source: samples.tpch.orders
-comment: Order counts and values grouped by status.
-fields:
-  - name: order_status
-    expr: o_orderstatus
-measures:
-  - name: order_count
-    expr: COUNT(*)
-  - name: total_order_value
-    expr: SUM(o_totalprice)
-$$
-```
+~~~text
+Add average_order_value as AVG(o_totalprice).
+Give it a clear display name and comment.
+Keep everything else unchanged and check the complete definition again.
+~~~
 
-The YAML indentation stays unchanged inside `$$`. Databricks can now perform the checks that need a real workspace.
+The skill should make the focused change, preserve the rest of the file, and report the new result.
 
-For the live steps and a smoke query, continue with [Validate and create a view in Databricks](../how-to/validate-and-create-a-view.md).
+## Choose the next step
+
+You now have a checked draft. You can:
+
+- ask the skill to [review it in more detail](../how-to/review-an-existing-view.md);
+- ask it to [deploy and verify the view](../how-to/deploy-a-view.md); or
+- keep editing locally without a Databricks connection.

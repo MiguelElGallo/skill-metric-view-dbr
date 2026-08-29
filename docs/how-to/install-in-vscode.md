@@ -1,44 +1,37 @@
-# Install the plugin in VS Code
+# Install the skill in VS Code
 
-Use this guide when you have a local checkout and want VS Code to load its skill and checker.
+## Install from the repository
 
-## Register the plugin
+1. Open the Command Palette with `⇧⌘P` on macOS or `Ctrl+Shift+P` on Windows and Linux.
+2. Run **Chat: Install Plugin From Source**.
+3. Paste:
 
-Open your user `settings.json` and add the absolute plugin path:
+   ~~~text
+   https://github.com/MiguelElGallo/skill-metric-view-dbr
+   ~~~
 
-```json
-"chat.plugins.enabled": true,
-"chat.pluginLocations": {
-  "/absolute/path/to/skill-metric-view-dbr/plugins/databricks-metric-view": true
-}
-```
+4. Select **databricks-metric-view**.
 
-Keep any plugin locations already present in the object.
+Voilà—the skill is ready in Chat.
 
-Reload the VS Code window.
+The skill's automatic preflight requires Node.js 20 or newer on the path used by VS Code.
 
-## Confirm the skill
+## Try it
 
-Run **Chat: Configure Skills** from the Command Palette. Confirm that `databricks-metric-view` is enabled.
+Open or create a writable project folder. Then open Chat in Agent mode and enter:
 
-## Confirm the tool
+~~~text
+Use the databricks-metric-view skill.
+Create a small metric view over samples.tpch.orders with an order_count measure.
+Check it, but do not deploy it.
+~~~
 
-Run **MCP: List Servers**. Confirm that `databricks-metric-view-checker` is running.
+The response should include a metric-view definition, the result of its automatic checks, and a clear note about anything that would still require Databricks.
 
-Open Chat and enter:
+## If the skill does not appear
 
-```text
-Use the Databricks metric view skill to check this YAML locally. Do not deploy it:
+Run **Chat: Configure Skills** from the Command Palette and enable **databricks-metric-view**.
 
-version: 1.1
-source: samples.tpch.orders
-measures:
-  - name: order_count
-    expr: COUNT(*)
-```
+If the skill appears but says its automatic preflight is unavailable, run `node --version` in the VS Code terminal. Install or select Node.js 20 or newer, then reload the VS Code window.
 
-A working installation calls `check_databricks_metric_view_yaml` and returns a local pass with the proof disclaimer.
-
-If the plugin is missing, confirm the path points to the directory that contains `plugin.json`. If the tool does not start, confirm that `node --version` works in the environment that launches VS Code.
-
-See the current [VS Code agent plugin documentation](https://code.visualstudio.com/docs/agent-customization/agent-plugins) for marketplace installation and management.
+See the current [VS Code agent plugin documentation](https://code.visualstudio.com/docs/agent-customization/agent-plugins) for VS Code installation and management details.

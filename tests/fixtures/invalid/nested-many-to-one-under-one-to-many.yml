@@ -1,0 +1,18 @@
+version: 1.1
+source: samples.tpch.orders
+joins:
+  - name: line_items
+    source: samples.tpch.lineitem
+    on: source.o_orderkey = line_items.l_orderkey
+    cardinality: one_to_many
+    joins:
+      - name: parts
+        source: samples.tpch.part
+        on: line_items.l_partkey = parts.p_partkey
+        cardinality: many_to_one
+fields:
+  - name: order_status
+    expr: source.o_orderstatus
+measures:
+  - name: line_revenue
+    expr: SUM(line_items.l_extendedprice)
