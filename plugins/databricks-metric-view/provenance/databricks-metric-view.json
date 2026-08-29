@@ -1,0 +1,32 @@
+{
+  "skill": "databricks-metric-view",
+  "origin": "https://github.com/MiguelElGallo/skill-metric-view-dbr",
+  "revision": "sha256:e0a4131af95a10767c3ad42f05062a3a4987457948c88cde4e2342fdf9161e01",
+  "sourceSubpath": "plugins/databricks-metric-view/skills/databricks-metric-view",
+  "importedAt": "2026-08-29",
+  "license": "MIT",
+  "licenseEvidence": {
+    "path": "LICENSE",
+    "sha256": "6a55b8c7a99caa57772f912232a4cd9e5e148dfc453776e0b1c0998734947b78"
+  },
+  "contentSha256": "e0a4131af95a10767c3ad42f05062a3a4987457948c88cde4e2342fdf9161e01",
+  "files": {
+    "SKILL.md": "418f86384eaf1b79b8b9483cd43aa81b02d5c770599efbad839de710bddbc179",
+    "agents/openai.yaml": "a1167abccba378fbc5b025e3c09abd5d48b126ab1917bfba99ac48b0bec25bbd",
+    "references/authoring.md": "365f795a28f588327bfa771014fa3388f48610c20675f675caee42d2864ce52b",
+    "references/deployment.md": "620bc82a8554b756ba84557ecdc27424510d9d25ccbebfc3b4111e34eca692a6",
+    "references/validation-levels.md": "e510b953a7f05cb84e487af0863ec63f3e5f42e8dd7bbf04bfe0316021fe0845",
+    "references/yaml-reference.md": "fa9cb09b72ca95341169253bf556316791824675fc1636a52412c1a618da6047"
+  },
+  "fileModes": {
+    "SKILL.md": false,
+    "agents/openai.yaml": false,
+    "references/authoring.md": false,
+    "references/deployment.md": false,
+    "references/validation-levels.md": false,
+    "references/yaml-reference.md": false
+  },
+  "transformations": [
+    "Created natively for this Agent Plugin"
+  ]
+}

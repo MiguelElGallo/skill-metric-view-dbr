@@ -1,0 +1,19 @@
+{
+  "name": "skill-metric-view-dbr",
+  "owner": {
+    "name": "MiguelElGallo",
+    "email": "60221874+MiguelElGallo@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "Portable skills and tools for Databricks metric-view YAML.",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "databricks-metric-view",
+      "description": "Author and preflight-check Databricks Unity Catalog metric-view YAML before submitting it to Databricks.",
+      "version": "0.0.1",
+      "source": "./plugins/databricks-metric-view"
+    }
+  ]
+}

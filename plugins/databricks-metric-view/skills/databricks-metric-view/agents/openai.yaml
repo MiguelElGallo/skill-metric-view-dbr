@@ -1,0 +1,4 @@
+interface:
+  display_name: "Databricks Metric Views"
+  short_description: "Author and preflight-check metric-view YAML"
+  default_prompt: "Use $databricks-metric-view to check this metric-view YAML before Databricks submission."
