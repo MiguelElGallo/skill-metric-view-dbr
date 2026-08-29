@@ -90,9 +90,15 @@ for (const [label, schema, value] of [
 if (manifest.name !== "databricks-metric-view") throw new Error("Plugin folder and manifest name differ");
 if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) throw new Error("Plugin version must use strict semver");
 const server = mcp.mcpServers["databricks-metric-view-checker"];
-if (server.command !== "node") throw new Error("MCP runtime must use the cross-platform node command");
-if (server.args[0] !== "${PLUGIN_ROOT}/dist/checker.mjs" || server.args[1] !== "mcp") {
-  throw new Error("MCP args must address the bundled server through PLUGIN_ROOT");
+if (server.command !== "./bin/checker.cmd") {
+  throw new Error("MCP runtime must use the bundled plugin-relative launcher");
+}
+if (server.args.length !== 1 || server.args[0] !== "mcp") {
+  throw new Error("MCP launcher must receive only the mcp subcommand");
+}
+const launcher = await lstat(join(pluginRoot, "bin", "checker.cmd"));
+if (process.platform !== "win32" && !(launcher.mode & 0o111)) {
+  throw new Error("MCP launcher must be executable on POSIX systems");
 }
 
 const skillPath = join(pluginRoot, "skills", "databricks-metric-view", "SKILL.md");
@@ -128,6 +134,10 @@ if (provenance.licenseEvidence.sha256 !== licenseSha256) {
 }
 
 await Promise.all([
+  readFile(join(pluginRoot, "bin", "checker.cmd")),
+  readFile(join(pluginRoot, "bin", "checker.ps1")),
+  readFile(join(pluginRoot, "bin", "checker.sh")),
+  readFile(join(pluginRoot, "bin", "checker-windows.cmd")),
   readFile(join(pluginRoot, "dist", "checker.mjs")),
   readFile(join(pluginRoot, "LICENSE")),
   readFile(join(pluginRoot, "THIRD_PARTY_NOTICES.md")),
@@ -142,8 +152,8 @@ const versions = new Set([
   catalog.marketplace.version,
   copilot.metadata?.version,
 ]);
-if (versions.size !== 1 || !versions.has("0.0.1")) {
-  throw new Error(`Package, plugin, catalog, and generated marketplace versions must all be 0.0.1: ${[...versions].join(", ")}`);
+if (versions.size !== 1 || !versions.has("0.0.2")) {
+  throw new Error(`Package, plugin, catalog, and generated marketplace versions must all be 0.0.2: ${[...versions].join(", ")}`);
 }
 if (copilot.plugins[0]?.source !== "./plugins/databricks-metric-view") {
   throw new Error("Copilot marketplace source is incorrect");

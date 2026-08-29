@@ -13,7 +13,7 @@ Build evidence-backed Databricks metric views and check every definition before 
 - **Create from supplied requirements:** draft from the named source columns and trusted business definitions without requesting authentication.
 - **Discover semantics from real assets:** use the selected profile and bounded source scope. Inventory metadata first; sample actual data only when the user authorized sampling. Read [semantic-discovery.md](references/semantic-discovery.md). For live retrieval, also read [live-discovery-operations.md](references/live-discovery-operations.md).
 - **Edit YAML:** preserve unrelated content, ordering, scalar style, and comments; make the smallest requested change.
-- **Deploy or live-validate:** run the local gate first. Continue only with the profile, warehouse, target, and create/update intent authorized by the user.
+- **Deploy or live-validate:** run the local gate first, then read [deployment.md](references/deployment.md) before constructing or submitting any DDL. Continue only with the profile, warehouse, target, and create/update intent authorized by the user.
 
 For create, edit, and audit guidance, read [authoring.md](references/authoring.md). For supported grammar and feature gates, read [yaml-reference.md](references/yaml-reference.md).
 
@@ -39,10 +39,10 @@ check_databricks_metric_view_yaml
 
 Prefer YAML text. Pass `compute: sql-warehouse` for a SQL warehouse target. Pass `compute: dbr` plus `runtime_version` for cluster compatibility checks.
 
-If MCP is unavailable, locate the plugin root (two directories above this `SKILL.md`) and run:
+If MCP is unavailable, locate the plugin root (two directories above this `SKILL.md`) and run the bundled launcher:
 
 ~~~bash
-node <plugin-root>/dist/checker.mjs check <metric-view.yml> --format json
+<plugin-root>/bin/checker.cmd check <metric-view.yml> --format json
 ~~~
 
 Add `--compute sql-warehouse`, or `--compute dbr --runtime <version>`, when target context is known. If neither MCP nor CLI runs, report that the mandatory local gate is unavailable; do not silently replace it with visual inspection and submit to Databricks.
@@ -79,7 +79,9 @@ A local PASS must retain the disclaimer that SQL expressions, catalog objects, p
 - Humanize codes only from documented or observed mappings whose meaning is known. Sample values alone do not define labels.
 - Do not claim local SQL parsing, source-column resolution, data-type checking, permission checks, or join-cardinality verification.
 - Use OAuth profiles and explicit `--profile` flags. Keep credentials and sensitive sample values out of files and command output.
-- Preserve YAML indentation through the stable Statement Execution API described in [deployment.md](references/deployment.md).
+- Before any analyzer canary or persistent DDL, read [deployment.md](references/deployment.md). Use its stable Statement Execution API path; do not send metric-view DDL through helpers that can rewrite multiline arguments.
+- Run the local gate against the exact YAML payload that will appear between `$$` delimiters. If serialization, formatting, or a correction changes that payload, check the changed payload again before submission.
+- Submit one checked statement. After a deterministic YAML or DDL analyzer error, inspect the error, make one justified correction, rerun the local gate, and only then submit again. For permission, ownership, target-state, context, transport, timeout, or unknown-outcome failures, do not change or resubmit the payload; resolve or poll the original operation first.
 - Create a missing target with `CREATE VIEW`. Update an existing metric view with `ALTER VIEW ... AS $$...$$` by default so grants and object identity are preserved. Use `CREATE OR REPLACE` only when the user explicitly accepts the grant and `table_id` reset.
 
 ## Authorization and stopping points

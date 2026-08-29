@@ -7393,7 +7393,7 @@ async function readStandardInput() {
 var import_yaml = __toESM(require_dist(), 1);
 
 // src/types.ts
-var CHECKER_VERSION = "0.0.1";
+var CHECKER_VERSION = "0.0.2";
 var RULES_VERIFIED_ON = "2026-08-29";
 
 // src/validator.ts
@@ -8690,7 +8690,7 @@ function validateMetricViewYaml(source, options = {}) {
 var HELP = `Databricks metric-view YAML checker
 
 Usage:
-  node checker.mjs check <file|-> [options]
+  checker.cmd check <file|-> [options]
 
 Options:
   --format <text|json>              Output format (default: text)

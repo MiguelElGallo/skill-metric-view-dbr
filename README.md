@@ -13,7 +13,7 @@ Use this repository URL:
 https://github.com/MiguelElGallo/skill-metric-view-dbr
 ~~~
 
-The skill is now available in VS Code Chat. Its automatic preflight needs Node.js 20 or newer on the path used by VS Code.
+The skill and its automatic preflight are now available in VS Code Chat. The plugin uses VS Code's bundled runtime, so no separate checker setup is required.
 
 ## Use the skill
 

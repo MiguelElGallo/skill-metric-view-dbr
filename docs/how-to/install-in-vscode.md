@@ -12,9 +12,7 @@
 
 4. Select **databricks-metric-view**.
 
-Voilà—the skill is ready in Chat.
-
-The skill's automatic preflight requires Node.js 20 or newer on the path used by VS Code.
+Voilà—the skill and its automatic preflight are ready in Chat. The plugin uses VS Code's bundled runtime, so there is no separate checker installation step.
 
 ## Try it
 
@@ -32,6 +30,6 @@ The response should include a metric-view definition, the result of its automati
 
 Run **Chat: Configure Skills** from the Command Palette and enable **databricks-metric-view**.
 
-If the skill appears but says its automatic preflight is unavailable, run `node --version` in the VS Code terminal. Install or select Node.js 20 or newer, then reload the VS Code window.
+If the skill appears but says its automatic preflight is unavailable, run **MCP: List Servers** and open the log for **databricks-metric-view-checker**. Reload the VS Code window once after updating the plugin. Outside VS Code, the launcher can fall back to Node.js 20 or newer.
 
 See the current [VS Code agent plugin documentation](https://code.visualstudio.com/docs/agent-customization/agent-plugins) for VS Code installation and management details.
