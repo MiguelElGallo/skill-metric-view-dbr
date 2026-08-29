@@ -2,48 +2,50 @@
 
 Use this reference when explaining confidence, choosing live checks, or reporting results.
 
-## Level 1: local
+## Level 1: local definition
 
-The bundled checker verifies YAML 1.2 parsing, duplicate keys, one-document input, documented field shapes, required and exclusive fields, cross-references that are knowable locally, and feature compatibility when target context is supplied.
+The bundled checker verifies YAML parsing, duplicate keys, documented field shapes, required and exclusive fields, locally knowable cross-references, and supplied compute compatibility.
 
-It does **not** validate:
+It does not validate SQL expressions, objects, permissions, source data, join cardinality, parameter castability, or Databricks analyzer behavior. Keep its disclaimer in the result.
 
-- Databricks SQL expression syntax or function support.
-- Whether source or joined objects and columns exist.
-- Permissions, masks, row filters, or ABAC policies.
-- Parameter default castability.
-- Actual join cardinality or the truth of `rely.at_most_one_match`.
-- Wildcard-expanded name collisions.
-- Databricks analyzer or optimizer behavior.
+## Level 2: semantic evidence
 
-The local result's disclaimer is part of the result and must not be omitted.
+Metadata, authorized samples, governed definitions, trusted SQL, and observed usage can justify why a field, measure, join, filter, name, or synonym belongs.
 
-## Level 2: live context
+Record provenance as business-authoritative, governed/declarative metadata, observed, or inferred, including locator, owner, retrieval time, and currentness. Sampling can show value shape; it does not prove full-table properties or business meaning.
 
-Use bounded read-only checks when the user wants more than offline linting and has selected a profile:
+## Level 3: live context
 
-- Confirm the host, user, SQL warehouse or cluster, and target schema.
-- Inspect source and join schemas.
-- Check that named columns exist and basic data types fit the expressions.
-- Assess many-to-one promises with bounded duplicate-key queries when authorized.
-- Confirm relevant runtime or SQL-warehouse feature availability.
+Bounded read-only checks can confirm:
 
-This still does not prove the full YAML will be accepted.
+- profile, host, compute, and target schema;
+- source and join objects and columns;
+- visible types, comments, tags, and declared constraints;
+- authorized sample statistics and relationship evidence;
+- relevant platform feature availability.
 
-## Level 3: Databricks analyzer/deployment
+This still does not prove that Databricks accepts the complete definition.
 
-Databricks must analyze the complete `WITH METRICS LANGUAGE YAML` statement. A successful analyzer result proves the submitted definition was accepted in that context. If deployment was requested, query explicit fields and `MEASURE(...)` outputs and compare important metrics to trusted SQL.
+## Level 4: Databricks analyzer
 
-Record profile, host, compute, target, statement state, smoke query, and cleanup. Avoid saying a metric is correct when only object creation succeeded.
+Databricks must analyze the complete metric-view statement. A temporary session canary proves parser/analyzer behavior and source resolution in that session, not final-target permissions or ownership. Only an authorized create or update against the fully qualified persistent target proves acceptance in that target's catalog, schema, compute, and permission context.
+
+It does not prove that each metric matches its business definition.
+
+## Level 5: result validation
+
+Query every important measure at useful grains and filters. When trusted SQL or expected outputs exist, align snapshot or as-of time, timezone, parameters, filters, grouping keys, null and zero-denominator behavior, rounding, and absolute and relative tolerance. Re-test joins at grains likely to expose fan-out.
+
+Record the exact query, parameters, result summary, and remaining coverage. Avoid saying a metric is correct when only object creation or one smoke query succeeded.
 
 ## Diagnostic policy
 
 - **Error:** deterministic local failure or a supplied DBR target below a documented minimum.
-- **Warning:** a material risk needing SQL, source schema, data, or analyzer evidence.
-- **Info:** a feature requirement or limitation when the target context is unknown or uses an auto-updated SQL warehouse.
+- **Warning:** a material risk needing SQL, metadata, data, business, or analyzer evidence.
+- **Info:** a feature requirement or limitation when target context is unknown or uses an auto-updated SQL warehouse.
 - **Unsupported field:** the checker does not know the field. Default preflight treats it as an error without claiming Databricks rejects it; compatibility mode can downgrade it after documentation review.
 
-Current references (verified 2026-08-29):
+Current references:
 
-- https://docs.databricks.com/aws/en/uc-semantics/metric-views/yaml-reference
-- https://docs.databricks.com/gcp/en/uc-semantics/metric-views/feature-availability
+- https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/metric-views/yaml-reference
+- https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/metric-views/feature-availability

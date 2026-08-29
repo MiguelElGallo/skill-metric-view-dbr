@@ -1,9 +1,12 @@
+import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import Ajv2020 from "ajv/dist/2020.js";
 import { parseDocument } from "yaml";
+
+import { normalizedTextFileSha256 } from "./provenance.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pluginRoot = join(root, "plugins", "databricks-metric-view");
@@ -19,6 +22,53 @@ async function assertNoSymlinks(path) {
     if (stat.isSymbolicLink()) throw new Error(`Plugin package must not contain symlinks: ${child}`);
     if (stat.isDirectory()) await assertNoSymlinks(child);
   }
+}
+
+async function skillHashes(path) {
+  const hashes = {};
+  const modes = {};
+
+  async function walk(current) {
+    const entries = await readdir(current, { withFileTypes: true });
+    entries.sort((left, right) => left.name.localeCompare(right.name));
+    for (const entry of entries) {
+      const child = join(current, entry.name);
+      const stat = await lstat(child);
+      if (stat.isSymbolicLink()) throw new Error("Skill must not contain symlinks: " + child);
+      if (stat.isDirectory()) {
+        await walk(child);
+        continue;
+      }
+      const name = relative(path, child).split(sep).join("/");
+      hashes[name] = await normalizedTextFileSha256(child);
+      modes[name] = Boolean(stat.mode & 0o111);
+    }
+  }
+
+  await walk(path);
+  return { hashes, modes };
+}
+
+function treeHash(hashes) {
+  const digest = createHash("sha256");
+  for (const [path, value] of Object.entries(hashes).sort(([left], [right]) =>
+    left.localeCompare(right),
+  )) {
+    digest.update(path);
+    digest.update("\0");
+    digest.update(value);
+    digest.update("\n");
+  }
+  return digest.digest("hex");
+}
+
+function mapsEqual(left, right) {
+  const leftKeys = Object.keys(left).sort();
+  const rightKeys = Object.keys(right).sort();
+  return (
+    leftKeys.length === rightKeys.length &&
+    leftKeys.every((key, index) => key === rightKeys[index] && left[key] === right[key])
+  );
 }
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
@@ -53,6 +103,28 @@ const metadata = parseDocument(frontmatter[1], { uniqueKeys: true }).toJS();
 if (metadata.name !== "databricks-metric-view") throw new Error("Skill folder and frontmatter name differ");
 if (typeof metadata.description !== "string" || metadata.description.length < 40) {
   throw new Error("Skill description is missing or not discriminating");
+}
+
+const provenance = await json(
+  join(pluginRoot, "provenance", "databricks-metric-view.json"),
+);
+const { hashes, modes } = await skillHashes(
+  join(pluginRoot, "skills", "databricks-metric-view"),
+);
+const contentSha256 = treeHash(hashes);
+if (
+  !mapsEqual(provenance.files, hashes) ||
+  !mapsEqual(provenance.fileModes, modes) ||
+  provenance.contentSha256 !== contentSha256 ||
+  provenance.revision !== "sha256:" + contentSha256
+) {
+  throw new Error("Skill provenance hashes or modes are stale");
+}
+const licenseSha256 = await normalizedTextFileSha256(
+  join(pluginRoot, provenance.licenseEvidence.path),
+);
+if (provenance.licenseEvidence.sha256 !== licenseSha256) {
+  throw new Error("Skill provenance license evidence is stale");
 }
 
 await Promise.all([

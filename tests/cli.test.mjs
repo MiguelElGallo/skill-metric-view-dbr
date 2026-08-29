@@ -176,6 +176,43 @@ test("DBR 19 accepts unitless numeric-index windows and integral aliases", () =>
   );
 });
 
+test("a bare unified runtime follows point releases in the same major line", () => {
+  const file = join(fixtures, "valid", "parameters-window.yml");
+  const unified = check(file, "--runtime", "18");
+  assert.equal(unified.status, 0);
+  assert.equal(
+    result(unified).diagnostics.some((item) => item.code === "DATABRICKS_RUNTIME_TOO_OLD"),
+    false,
+  );
+
+  const pointRelease = check(file, "--runtime", "18.0");
+  assert.equal(pointRelease.status, 1);
+  assert.equal(
+    result(pointRelease).diagnostics.some((item) => item.code === "DATABRICKS_RUNTIME_TOO_OLD"),
+    true,
+  );
+
+  const preUnified = check(join(fixtures, "valid", "basic-fields.yml"), "--runtime", "17");
+  assert.equal(preUnified.status, 1);
+  assert.equal(
+    result(preUnified).diagnostics.some((item) => item.code === "DATABRICKS_RUNTIME_TOO_OLD"),
+    true,
+  );
+
+  const preUnifiedBase = check(
+    join(fixtures, "valid", "basic-dimensions-01.yml"),
+    "--runtime",
+    "16",
+  );
+  assert.equal(preUnifiedBase.status, 1);
+  assert.equal(
+    result(preUnifiedBase).diagnostics.some(
+      (item) => item.code === "METRIC_VIEWS_RUNTIME_TOO_OLD",
+    ),
+    true,
+  );
+});
+
 test("date and date_time formats require their documented options", () => {
   const run = check(join(fixtures, "invalid", "format-options.yml"), "--runtime", "19");
   assert.equal(run.status, 1);
@@ -259,4 +296,47 @@ fields:
   );
   assert.equal(rely.status, 0);
   assert.equal(result(rely).valid, true);
+});
+
+test("one-to-many joins may declare a directional RELY promise", () => {
+  const run = check(join(fixtures, "valid", "one-to-many-rely.yml"), "--runtime", "19");
+  assert.equal(run.status, 0);
+  const parsed = result(run);
+  assert.equal(parsed.valid, true);
+  assert.equal(
+    parsed.diagnostics.some((item) => item.code === "JOIN_RELY_DATA_NOT_VALIDATED"),
+    true,
+  );
+  assert.equal(
+    parsed.diagnostics.some((item) => item.code === "CONTRADICTORY_JOIN_RELY"),
+    false,
+  );
+});
+
+test("nested join subtrees require uniform cardinality in both directions", () => {
+  const oneToManyParent = check(
+    join(fixtures, "invalid", "nested-many-to-one-under-one-to-many.yml"),
+    "--runtime",
+    "19",
+  );
+  assert.equal(oneToManyParent.status, 1);
+  assert.equal(
+    result(oneToManyParent).diagnostics.some(
+      (item) => item.code === "ONE_TO_MANY_DESCENDANT_CARDINALITY",
+    ),
+    true,
+  );
+
+  const manyToOneParent = check(
+    join(fixtures, "invalid", "nested-one-to-many-under-many-to-one.yml"),
+    "--runtime",
+    "19",
+  );
+  assert.equal(manyToOneParent.status, 1);
+  assert.equal(
+    result(manyToOneParent).diagnostics.some(
+      (item) => item.code === "MANY_TO_ONE_DESCENDANT_CARDINALITY",
+    ),
+    true,
+  );
 });

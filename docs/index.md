@@ -1,29 +1,32 @@
-# Databricks Metric View Plugin documentation
+# Databricks Metric View skill
 
-Choose the page that matches what you need now.
+Use the skill from VS Code Chat to create, improve, review, or deploy a Databricks metric view.
+
+## Start here
+
+1. [Install the plugin in VS Code](how-to/install-in-vscode.md).
+2. [Create your first metric view](tutorials/create-your-first-metric-view.md).
+3. [Copy a prompt for your next task](reference/prompt-library.md).
 
 ## Learn by doing
 
-- [Check your first file](tutorials/check-your-first-file.md)
 - [Create your first metric view](tutorials/create-your-first-metric-view.md)
+- [Improve an existing metric view](tutorials/improve-an-existing-metric-view.md)
 
 ## Complete a task
 
-- [Install the plugin in VS Code](how-to/install-in-vscode.md)
-- [Check a definition](how-to/check-a-definition.md)
-- [Validate and create a view in Databricks](how-to/validate-and-create-a-view.md)
+- [Discover semantics and create a metric view from a table](how-to/create-from-a-table.md)
+- [Review an existing metric view](how-to/review-an-existing-view.md)
+- [Deploy and verify a metric view](how-to/deploy-a-view.md)
 
-## Look up exact behavior
+## Look up how the skill behaves
 
-- [Command-line reference](reference/command-line.md)
-- [MCP tool reference](reference/mcp-tool.md)
-- [Validation rules](reference/validation-rules.md)
-- [Plugin package layout](reference/plugin-layout.md)
+- [Skill behavior](reference/skill-behavior.md)
+- [Prompt library](reference/prompt-library.md)
+- [Supported metric-view features](reference/supported-features.md)
 
-## Understand the design
+## Understand the workflow
 
-- [Why check locally first](explanation/why-local-first.md)
-- [Why the checker uses Node.js](explanation/why-node.md)
-- [What each validation level proves](explanation/validation-levels.md)
-
-This documentation follows [Diátaxis](https://diataxis.fr/): tutorials teach through a safe experience, how-to guides solve a specific problem, reference pages describe the product, and explanation pages discuss why it works this way.
+- [Why the skill checks every definition](explanation/why-the-skill-checks.md)
+- [How semantic discovery works](explanation/how-semantic-discovery-works.md)
+- [What the skill can prove](explanation/what-the-skill-can-prove.md)
