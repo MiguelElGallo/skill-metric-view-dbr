@@ -47,7 +47,7 @@ if (server.args[0] !== "${PLUGIN_ROOT}/dist/checker.mjs" || server.args[1] !== "
 
 const skillPath = join(pluginRoot, "skills", "databricks-metric-view", "SKILL.md");
 const skillSource = await readFile(skillPath, "utf8");
-const frontmatter = /^---\n([\s\S]*?)\n---/.exec(skillSource);
+const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(skillSource);
 if (!frontmatter) throw new Error("SKILL.md is missing YAML frontmatter");
 const metadata = parseDocument(frontmatter[1], { uniqueKeys: true }).toJS();
 if (metadata.name !== "databricks-metric-view") throw new Error("Skill folder and frontmatter name differ");
