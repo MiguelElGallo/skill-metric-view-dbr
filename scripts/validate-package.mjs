@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import { parseDocument } from "yaml";
 
+import { normalizedTextFileSha256 } from "./provenance.mjs";
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pluginRoot = join(root, "plugins", "databricks-metric-view");
 
@@ -38,7 +40,7 @@ async function skillHashes(path) {
         continue;
       }
       const name = relative(path, child).split(sep).join("/");
-      hashes[name] = createHash("sha256").update(await readFile(child)).digest("hex");
+      hashes[name] = await normalizedTextFileSha256(child);
       modes[name] = Boolean(stat.mode & 0o111);
     }
   }
@@ -118,9 +120,9 @@ if (
 ) {
   throw new Error("Skill provenance hashes or modes are stale");
 }
-const licenseSha256 = createHash("sha256")
-  .update(await readFile(join(pluginRoot, provenance.licenseEvidence.path)))
-  .digest("hex");
+const licenseSha256 = await normalizedTextFileSha256(
+  join(pluginRoot, provenance.licenseEvidence.path),
+);
 if (provenance.licenseEvidence.sha256 !== licenseSha256) {
   throw new Error("Skill provenance license evidence is stale");
 }
