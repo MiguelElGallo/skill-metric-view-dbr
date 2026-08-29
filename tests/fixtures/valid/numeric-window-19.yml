@@ -1,0 +1,17 @@
+version: 1.1
+source: samples.tpch.orders
+parameters:
+  - name: window_size
+    data_type: LONG
+    default: 3
+fields:
+  - name: month_index
+    expr: YEAR(o_orderdate) * 12 + MONTH(o_orderdate)
+measures:
+  - name: rolling_orders
+    expr: COUNT(*)
+    window:
+      - order: month_index
+        range: trailing window_size
+        offset: -1
+        semiadditive: last

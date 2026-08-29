@@ -1,0 +1,20 @@
+version: 1.1
+source: samples.tpch.orders
+fields:
+  - name: missing_date_format
+    expr: o_orderdate
+    format:
+      type: date
+  - name: hidden_date
+    expr: o_orderdate
+    format:
+      type: date
+      date_format: no_date
+  - name: incomplete_datetime
+    expr: CAST(o_orderdate AS TIMESTAMP)
+    format:
+      type: date_time
+      date_format: year_month_day
+measures:
+  - name: order_count
+    expr: COUNT(*)
