@@ -40,7 +40,7 @@ Databricks calls descriptions `comment`. For production-oriented agent or Genie 
 - an approved `format` wherever type, unit, currency, percentage, date, or time semantics justify one;
 - genuine `synonyms` after reviewing the vocabulary used by the intended consumers. No synonym is better than an invented or ambiguous one.
 
-Put durable business descriptions in YAML `comment:` properties. Databricks removes single-line YAML comments written with `#` when it saves a version 1.1 definition, so never rely on comment tokens to preserve semantic meaning.
+Put durable business descriptions in YAML `comment` properties. Databricks removes single-line YAML comments written with `#` when it saves a version 1.1 definition, so never rely on comment tokens to preserve semantic meaning.
 
 Treat agent metadata as downstream-facing behavior. AI/BI dashboards automatically consume `display_name` and `format` for datasets and visualizations, while Genie automatically imports `synonyms` for natural-language discovery. Review those consumers after changing this metadata; a technically valid alias or format can still mislead users.
 

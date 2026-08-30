@@ -34,7 +34,7 @@ SQL warehouses run an automatically updated Databricks SQL version. Do not prete
 
 Databricks documents `comment`, `display_name`, `format`, and `synonyms` as optional YAML properties. `display_name` is limited to 255 characters. Each field or measure can have at most 10 synonyms, each limited to 255 characters. Formats use the documented number, currency, percentage, byte, date, or date-time shapes. Wildcard entries cannot carry per-output metadata.
 
-In YAML 1.1, Databricks removes single-line comments written with `#` when it saves the metric-view definition. Treat those tokens as temporary authoring notes, not durable semantic metadata. Store business meaning in the view, field, or measure `comment:` property instead.
+In YAML 1.1, Databricks removes single-line comments written with `#` when it saves the metric-view definition. Treat those tokens as temporary authoring notes, not durable semantic metadata. Store business meaning in the view, field, or measure `comment` property instead.
 
 Downstream consumers use this metadata automatically:
 

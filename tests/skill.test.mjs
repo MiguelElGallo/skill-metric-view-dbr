@@ -106,11 +106,34 @@ test("skill requires production semantic coverage without inventing terminology"
 
 test("skill preserves durable agent metadata and documents downstream propagation", async () => {
   const skill = await readFile(skillPath, "utf8");
+  const vscodeSkill = await readFile(
+    join(
+      root,
+      "plugins",
+      "databricks-metric-view-vscode",
+      "skills",
+      "databricks-metric-view",
+      "SKILL.md",
+    ),
+    "utf8",
+  );
   const yamlReference = await readFile(
     join(
       root,
       "plugins",
       "databricks-metric-view",
+      "skills",
+      "databricks-metric-view",
+      "references",
+      "yaml-reference.md",
+    ),
+    "utf8",
+  );
+  const vscodeYamlReference = await readFile(
+    join(
+      root,
+      "plugins",
+      "databricks-metric-view-vscode",
       "skills",
       "databricks-metric-view",
       "references",
@@ -124,6 +147,8 @@ test("skill preserves durable agent metadata and documents downstream propagatio
   assert.match(yamlReference, /temporary authoring notes, not durable semantic metadata/);
   assert.match(yamlReference, /AI\/BI dashboards.*`display_name`.*`format`/s);
   assert.match(yamlReference, /Genie imports `synonyms`/);
+  assert.equal(vscodeSkill, skill);
+  assert.equal(vscodeYamlReference, yamlReference);
 });
 
 test("skill carries over relevant full Snowflake-skill workflow lessons", async () => {
