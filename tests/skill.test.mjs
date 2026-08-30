@@ -143,10 +143,14 @@ test("skill preserves durable agent metadata and documents downstream propagatio
   );
 
   assert.match(skill, /removes single-line YAML comments written with `#`/);
+  assert.match(skill, /durable business descriptions.*YAML `comment` properties/s);
   assert.match(skill, /AI\/BI dashboards.*`display_name`.*`format`.*Genie.*`synonyms`/s);
+  assert.match(skill, /Review those consumers after changing this metadata/);
   assert.match(yamlReference, /temporary authoring notes, not durable semantic metadata/);
+  assert.match(yamlReference, /Store business meaning.*`comment` property/s);
   assert.match(yamlReference, /AI\/BI dashboards.*`display_name`.*`format`/s);
   assert.match(yamlReference, /Genie imports `synonyms`/);
+  assert.match(yamlReference, /Review affected dashboards and representative Genie questions/);
   assert.equal(vscodeSkill, skill);
   assert.equal(vscodeYamlReference, yamlReference);
 });
