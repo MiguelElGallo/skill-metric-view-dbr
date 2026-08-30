@@ -44,6 +44,14 @@ test("copied package with spaces exposes and invokes the MCP tool", async () => 
     await client.connect(transport);
     const tools = await client.listTools();
     assert.deepEqual(tools.tools.map((tool) => tool.name), ["check_databricks_metric_view_yaml"]);
+    const [checkerTool] = tools.tools;
+    assert.equal(
+      Object.hasOwn(checkerTool.inputSchema, "oneOf"),
+      false,
+      "VS Code Copilot rejects MCP tools with a top-level oneOf schema",
+    );
+    assert.equal(checkerTool.inputSchema.properties.semantic_quality.type, "boolean");
+    assert.match(checkerTool.inputSchema.description, /exactly one of yaml or file/i);
     const call = await client.callTool({
       name: "check_databricks_metric_view_yaml",
       arguments: { yaml, compute: "sql-warehouse", semantic_quality: true },
@@ -123,6 +131,14 @@ test("VS Code compatibility package launches the portable MCP checker", async ()
     await client.connect(transport);
     const tools = await client.listTools();
     assert.deepEqual(tools.tools.map((tool) => tool.name), ["check_databricks_metric_view_yaml"]);
+    const [checkerTool] = tools.tools;
+    assert.deepEqual(Object.keys(checkerTool.inputSchema).sort(), [
+      "additionalProperties",
+      "description",
+      "properties",
+      "type",
+    ]);
+    assert.equal(checkerTool.inputSchema.properties.semantic_quality.type, "boolean");
     const call = await client.callTool({
       name: "check_databricks_metric_view_yaml",
       arguments: { yaml, compute: "sql-warehouse", semantic_quality: true },
