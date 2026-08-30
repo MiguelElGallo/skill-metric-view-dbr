@@ -1,7 +1,7 @@
 {
   "skill": "databricks-metric-view",
   "origin": "https://github.com/MiguelElGallo/skill-metric-view-dbr",
-  "revision": "sha256:89aa295136caf31a8829c22134ae49a4ce8e617df949e9ec6063c3578228216a",
+  "revision": "sha256:4bcba6d633f34eafe1385316e72dd317e9344c1732bb25a7cecee71350611283",
   "sourceSubpath": "plugins/databricks-metric-view/skills/databricks-metric-view",
   "importedAt": "2026-08-29",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "path": "LICENSE",
     "sha256": "6a55b8c7a99caa57772f912232a4cd9e5e148dfc453776e0b1c0998734947b78"
   },
-  "contentSha256": "89aa295136caf31a8829c22134ae49a4ce8e617df949e9ec6063c3578228216a",
+  "contentSha256": "4bcba6d633f34eafe1385316e72dd317e9344c1732bb25a7cecee71350611283",
   "files": {
     "agents/openai.yaml": "df89e016788a4bdc6feb177d954506ecf560f2e0663bae2319a744c97f62770b",
     "references/authoring.md": "f6873b2ef609712ad42761eac8763d9d5a60fcd8ac3f8a4b77fb66a4f9d0f4fd",
@@ -17,8 +17,8 @@
     "references/live-discovery-operations.md": "95a46695889c721f045d799135ecc4bff5bacb5ccd5ec200b8328a609fa677e9",
     "references/semantic-discovery.md": "7d75a046f8f7e3c5fe24b2c190d55d6c7cb4f23367002c9156ad7401e40218ed",
     "references/validation-levels.md": "325a095dd0f64cd42370deba7fe13105607dc73fbd3d4fa7eb7bacdf2671a12c",
-    "references/yaml-reference.md": "231adb19ebdcfd4beac6b974e19e1c7853cdf75732d3241f523c8f47ed9ca001",
-    "SKILL.md": "fd3eb2d10839832c054e5e9402d207075665d45c67ef79fcdf5343df4506e543"
+    "references/yaml-reference.md": "69f735e4c2aa7d0a84ba5c1a886b0c7e7db26fe25ab2114d342c8608e3760a0d",
+    "SKILL.md": "02e10f709e93c9348a805c7484bee09832342c424274a9e956bef3d1466b58a0"
   },
   "fileModes": {
     "agents/openai.yaml": false,

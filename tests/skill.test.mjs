@@ -104,6 +104,28 @@ test("skill requires production semantic coverage without inventing terminology"
   assert.match(discovery, /A request to deploy is not approval to invent/);
 });
 
+test("skill preserves durable agent metadata and documents downstream propagation", async () => {
+  const skill = await readFile(skillPath, "utf8");
+  const yamlReference = await readFile(
+    join(
+      root,
+      "plugins",
+      "databricks-metric-view",
+      "skills",
+      "databricks-metric-view",
+      "references",
+      "yaml-reference.md",
+    ),
+    "utf8",
+  );
+
+  assert.match(skill, /removes single-line YAML comments written with `#`/);
+  assert.match(skill, /AI\/BI dashboards.*`display_name`.*`format`.*Genie.*`synonyms`/s);
+  assert.match(yamlReference, /temporary authoring notes, not durable semantic metadata/);
+  assert.match(yamlReference, /AI\/BI dashboards.*`display_name`.*`format`/s);
+  assert.match(yamlReference, /Genie imports `synonyms`/);
+});
+
 test("skill carries over relevant full Snowflake-skill workflow lessons", async () => {
   const skill = await readFile(skillPath, "utf8");
   const authoring = await readFile(
