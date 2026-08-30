@@ -40,6 +40,10 @@ Databricks calls descriptions `comment`. For production-oriented agent or Genie 
 - an approved `format` wherever type, unit, currency, percentage, date, or time semantics justify one;
 - genuine `synonyms` after reviewing the vocabulary used by the intended consumers. No synonym is better than an invented or ambiguous one.
 
+Put durable business descriptions in YAML `comment` properties. Databricks removes single-line YAML comments written with `#` when it saves a version 1.1 definition, so never rely on comment tokens to preserve semantic meaning.
+
+Treat agent metadata as downstream-facing behavior. AI/BI dashboards automatically consume `display_name` and `format` for datasets and visualizations, while Genie automatically imports `synonyms` for natural-language discovery. Review those consumers after changing this metadata; a technically valid alias or format can still mislead users.
+
 Read existing business-authoritative and governed descriptions, comments, aliases, tags, glossary terms, Genie instructions, KPI definitions, and trusted SQL first. Preserve and reuse existing metadata only when it applies to the same semantic element and has no unresolved conflict. Prefer owned, current, business-approved definitions over a fixed source-type order.
 
 If terminology is missing, draft provenance-bearing suggestions and ask for approval before placing new business meaning in deployable YAML. Keep each suggestion outside the YAML with `value`, `yaml_path`, `evidence_class`, `locator`, `owner/currentness`, and `status: proposed|approved|rejected`. A request to deploy does not approve invented semantics. Broad permission such as `use your best judgment` or `do not ask` authorizes drafting proposals, not marking them approved; each exact critical text, formula, unit, mapping, filter, key, join, or synonym must have current authoritative support or explicit acceptance after presentation. Mechanical display formatting that adds no new meaning may proceed without a business checkpoint; currency, units, code labels, filters, formulas, joins, and aggregation behavior are not mechanical.

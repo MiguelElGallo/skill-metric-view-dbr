@@ -34,6 +34,15 @@ SQL warehouses run an automatically updated Databricks SQL version. Do not prete
 
 Databricks documents `comment`, `display_name`, `format`, and `synonyms` as optional YAML properties. `display_name` is limited to 255 characters. Each field or measure can have at most 10 synonyms, each limited to 255 characters. Formats use the documented number, currency, percentage, byte, date, or date-time shapes. Wildcard entries cannot carry per-output metadata.
 
+When Databricks saves a definition that uses metric view YAML specification version 1.1, it removes single-line comments written with `#`. Treat those tokens as temporary authoring notes, not durable semantic metadata. Store business meaning in the view, field, or measure `comment` property instead.
+
+Downstream consumers use this metadata automatically:
+
+- AI/BI dashboards populate dataset and visualization labels from `display_name` and presentation behavior from `format`.
+- Genie imports `synonyms` to improve field and measure discovery from natural-language questions.
+
+Changing agent metadata therefore changes consumer-facing behavior even when expressions stay the same. Review affected dashboards and representative Genie questions after a metadata change.
+
 Schema optionality is not the same as semantic readiness. For production use, review comments and display names for every explicit output, formats where applicable, and genuine consumer vocabulary for synonyms. The checker's opt-in semantic-quality mode reports presence and deterministic hygiene only; blank metadata is not treated as a documented Databricks analyzer error.
 
 ## Locally enforced relationships
