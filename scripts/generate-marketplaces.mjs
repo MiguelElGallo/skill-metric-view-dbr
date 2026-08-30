@@ -22,11 +22,11 @@ const copilot = {
     description: catalog.marketplace.description,
     version: catalog.marketplace.version,
   },
-  plugins: plugins.map(({ manifest }) => ({
+  plugins: plugins.map(({ entry, manifest }) => ({
     name: manifest.name,
     description: manifest.description,
     version: manifest.version,
-    source: `./plugins/${manifest.name}`,
+    source: entry.copilotSource ?? `./plugins/${manifest.name}`,
   })),
 };
 
