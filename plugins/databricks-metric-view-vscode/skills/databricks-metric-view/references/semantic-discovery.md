@@ -2,7 +2,7 @@
 
 Read this reference when creating a metric view from real tables or improving the business semantics of an existing definition.
 
-The goal is not to expose every column. The goal is to find the smallest reusable set of fields, measures, joins, filters, and descriptions that answer trusted business questions.
+The goal is not to expose every column. The goal is to review every bounded source column and produce the smallest semantically complete set of fields, measures, joins, filters, and metadata that answers the agreed business questions.
 
 ## Establish the scope
 
@@ -15,6 +15,7 @@ Resolve these inputs from the request. Ask once for missing items that materiall
 - Whether the task is review-first or may continue to deployment.
 - Whether actual data sampling is authorized, including tables, columns, sample percentage or row bucket, estimated bytes or rows scanned when available, maximum returned rows, maximum profiling-query count, per-query timeout, warehouse, and sensitive-data exclusions.
 - Any supplied evidence: KPI files, trusted SQL, dashboards, Genie Agent, data dictionary, or business glossary.
+- Whether a supplied list is exhaustive. Treat named columns and measures as required seeds unless the user says `only` or `exactly`, supplies a complete authoritative specification, or explicitly requests a structural smoke test.
 
 Never auto-select a profile. Keep every CLI command on the selected `--profile`.
 
@@ -29,7 +30,7 @@ Keep provenance on every proposed semantic element:
 | **Observed** | Repeated query expression, dashboard filter, sampled value distribution, successful join test | Use as evidence, not as an unstated business definition. |
 | **Inferred** | Column-name heuristic, fact/dimension guess, suggested synonym, possible ratio | Present as a proposal and request confirmation when it changes meaning. |
 
-For every item, record the exact locator, owner or approving authority when known, retrieval time, and whether it appears current, stale, or in conflict. Do not assume a generated comment, technical tag, or declared key is current business truth. Prefer business-approved authority over governed metadata, governed metadata over observed behavior, and observed behavior over name-based inference. Surface conflicts with both sources attached.
+For every item, record the exact locator, owner or approving authority when known, retrieval time, and whether it appears current, stale, or in conflict. Do not assume a generated comment, technical tag, or declared key is current business truth. Prefer owned, current, business-approved definitions. Then weigh scope fit, stewardship, currentness, and conflict status; do not use asset type alone as a fixed precedence rule. Surface conflicts with all sources attached.
 
 ## Discovery workflow
 
@@ -47,13 +48,15 @@ Report meaningful overlap. Prefer extending the existing view with `ALTER VIEW` 
 
 ### 2. Inventory metadata before rows
 
-Collect only the metadata needed for the bounded sources:
+Collect the complete metadata-only schema for every bounded source table before selecting outputs:
 
 - catalog, schema, and table comments;
 - column names, types, nullability, comments, tags, masks, and classifications visible to the caller;
 - primary, foreign, and unique constraints, including `RELY` state;
 - table properties, clustering or partition information, and freshness metadata;
 - existing metric-view, dashboard, Genie, or KPI descriptions explicitly in scope.
+
+Read existing table comments and every column comment before drafting descriptions. For each column, record an `include`, `exclude`, or `defer` decision and the reason. An exclusion can be correct because the column is operational, sensitive, redundant, unsupported by the questions, or semantically unresolved; it must not disappear from the review merely because it was not named in the prompt.
 
 Use exact Unity Catalog names. In SQL, backtick-quote each identifier part that contains special characters.
 
@@ -148,14 +151,13 @@ When data profiling is authorized, test the minimum needed:
 - child-key null rate;
 - unmatched child-key rate;
 - rows before and after the join;
-- for `many_to_one`, maximum joined-row matches per stable source-row identity, which must be at most one before asserting the `RELY` promise;
-- for `one_to_many`, maximum source-row matches per stable joined-row identity, which must be at most one before asserting the directional `RELY` promise.
+- for `many_to_one`, maximum joined-row matches per stable source-row identity, which must be at most one before asserting the `RELY` promise.
 
 When stable row identities are unavailable, test full join-key uniqueness in the relevant direction and label the limitation. Keep sample-tested and full-scope-tested conformance distinct.
 
 For slowly changing or snapshot dimensions, also test active-row uniqueness per business key and confirm the intended temporal or as-of join. A business key that is unique only within an effective-time range is not an ordinary many-to-one join.
 
-Use bounded samples first. Ask before a full-table reconciliation that may be expensive. Label untested relationships as candidates. Do not set `rely.at_most_one_match: true` from naming or sampled evidence alone.
+Use bounded samples first. Ask before a full-table reconciliation that may be expensive. Label untested relationships as candidates. Do not set `rely.at_most_one_match: true` on a one-to-many join or from naming or sampled evidence alone.
 
 ### 6. Select fields
 
@@ -171,6 +173,14 @@ Do not expose tagged sensitive columns by default. Humanize codes only when the 
 
 For every field, record expression, source, description, display name, genuine synonyms, null behavior, and evidence class.
 
+Maintain a complete column coverage ledger:
+
+| Source column | Decision | Reason | Candidate output | Evidence or open question |
+| --- | --- | --- | --- | --- |
+| `<column>` | Include / Exclude / Defer | `<reason>` | `<field or measure>` | `<locator or question>` |
+
+Derived fields must also record how the transformation changes the source meaning. A source comment cannot be copied unchanged to `DATE_TRUNC`, `CASE`, `COALESCE`, a renamed output, or another transformation unless it still describes the result.
+
 ### 7. Define measures from business evidence
 
 Start from a question, KPI, or trusted SQL—not merely from numeric types.
@@ -183,6 +193,8 @@ For each measure, record:
 - unit, currency, timezone, and sign convention;
 - distinct-count key when applicable;
 - numerator and denominator semantics for ratios;
+- additivity or semi-additivity across time and other dimensions;
+- null and zero-denominator behavior;
 - expected behavior across dimensions;
 - authoritative comparison query when available.
 
@@ -200,9 +212,33 @@ When the user supplies or authorizes them:
 
 Deduplicate by normalized expression and business meaning. Record each contributing source. A conflict such as “gross amount” versus “net amount” is a question, not an opportunity to choose silently.
 
-### 9. Present a semantic inventory before YAML
+### 9. Enrich every included semantic element
 
-For a guided creation task, show a compact inventory:
+Databricks exposes durable semantic metadata through `comment`, `display_name`, `synonyms`, and `format` in YAML 1.1 on supported compute. Treat enrichment as required production work even though each property is optional in the Databricks schema.
+
+For the view and every explicit field or measure:
+
+1. Read business-authoritative and governed descriptions, comments, display labels, aliases, glossary terms, tags, KPI definitions, Genie instructions, and trusted SQL that are in scope.
+2. Reuse an existing definition only when it applies to the same semantic element, is sufficiently current and owned, and has no unresolved conflict.
+3. Draft a concise durable `comment` that explains business meaning, scope, grain, filters, and units as applicable.
+4. Add a user-facing `display_name`. Mechanical title casing can proceed when it adds no meaning; renamed business concepts require evidence or approval.
+5. Review the consumers' vocabulary and add only genuine, unambiguous `synonyms`. Synonyms are imported into Genie, so a false alias is worse than no alias. Do not turn every SQL alias or dashboard label into a synonym automatically.
+6. Add `format` only from known type and presentation semantics. Currency, percentage scale, timezone, sign convention, and unit are business assertions, not cosmetic guesses.
+7. Humanize code values only from an approved or documented mapping. Observing `O`, `P`, or `F` in a sample does not establish their labels.
+
+Preservation is not endorsement. Copying metadata into a transformed field, filtered measure, ratio, window, renamed output, or different object is a new assertion and needs scope validation.
+
+When terminology is absent or conflicting, keep the proposal outside deployable YAML:
+
+| value | yaml_path | evidence_class | locator | owner/currentness | status |
+| --- | --- | --- | --- | --- | --- |
+| `<proposed text>` | `$.fields[0].comment` | Inferred | `<source>` | `<owner/status>` | proposed |
+
+Use `proposed`, `approved`, or `rejected`. Ask once for the unresolved business choices before moving approved values into YAML. A request to deploy is not approval to invent a formula, join, unit, code label, description, or synonym. Broad instructions such as `use whatever seems reasonable`, `use your best judgment`, or `do not ask` allow proposal drafting only. Exact critical values require current authoritative evidence or explicit acceptance after the proposal is shown.
+
+### 10. Present a semantic inventory before YAML
+
+For every production-intended real-asset creation, record and show a compact inventory before YAML:
 
 | Area | Candidate | Evidence and locator | Owner/currentness | Confidence | Open question |
 | --- | --- | --- | --- | --- | --- |
@@ -215,13 +251,29 @@ Cover:
 
 - existing-view overlap;
 - source tables, roles, grains, and keys;
+- every bounded source column with an include, exclude, or defer decision;
 - relationships and validation status;
 - candidate fields, measures, and filters;
-- metadata, synonyms, and provenance;
+- comments, display names, formats, synonyms, approval status, and provenance;
 - sensitive exclusions;
 - gaps and unresolved business questions.
 
-In review-first mode, wait for approval of business-critical choices before generating the definition. Do not force approval for routine metadata collection or obvious formatting.
+Before deployable YAML, also show question coverage and complete measure contracts. Keep any critical inferred or conflicting grain, formula, unit, filter, distinct key, join meaning, cardinality, or code mapping out of the definition. Do not force approval for routine metadata collection, preservation of applicable current metadata, or mechanical display formatting.
+
+## Semantic readiness decision
+
+Mark a production-intended view ready only when:
+
+- the agreed questions map to fields, measures, and filters;
+- source role, grain, keys, and time behavior are recorded;
+- the column coverage ledger has no unexplained omission;
+- each measure contract is complete for every applicable attribute;
+- relationships have separate semantic-justification and data-conformance statuses;
+- every explicit output has an approved comment and display name;
+- applicable formats are justified and genuine consumer vocabulary was reviewed for synonyms;
+- exclusions, sensitive fields, conflicts, and gaps are visible.
+
+There is no minimum count. A two-field view can be ready for a genuinely narrow purpose; a fifty-field view can fail readiness when meanings are missing. An explicit installation or structural smoke can proceed without this gate only when it is labeled non-production and its proof objective is recorded.
 
 ## Validate meaning after deployment
 
@@ -236,6 +288,8 @@ When trusted SQL or expected results exist:
 5. Re-test joins at grains likely to reveal fan-out.
 6. For parameterized views, invoke the view as a table-valued function with explicit representative arguments and report the exact call.
 7. Treat any unexplained mismatch as a failure.
+
+When the user supplies trusted natural-language question and SQL pairs, run each pair against the deployed metric view or explicitly scoped Genie surface, compare the generated or metric-view result with the trusted SQL, and report exact differences. Keep these benchmark changes separate from unrelated structural fixes so a passing schema check cannot hide a behavioral regression.
 
 For a materialized definition, also:
 
@@ -261,3 +315,5 @@ Databricks references:
 - [TABLESAMPLE](https://docs.databricks.com/aws/en/sql/language-manual/sql-ref-syntax-qry-select-sampling)
 - [Unity Catalog key column usage](https://docs.databricks.com/aws/en/sql/language-manual/information-schema/key_column_usage)
 - [Metric-view YAML reference](https://learn.microsoft.com/en-us/azure/databricks/uc-semantics/metric-views/yaml-reference)
+- [Agent metadata for metric views](https://docs.databricks.com/aws/en/uc-semantics/agent-metadata)
+- [Databricks TPC-H metric-view tutorial](https://docs.databricks.com/aws/en/uc-semantics/metric-views/tpch-example)

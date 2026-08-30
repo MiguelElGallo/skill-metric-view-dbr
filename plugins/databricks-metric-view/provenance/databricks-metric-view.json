@@ -1,7 +1,7 @@
 {
   "skill": "databricks-metric-view",
   "origin": "https://github.com/MiguelElGallo/skill-metric-view-dbr",
-  "revision": "sha256:691a45c3686c1d6ab658a72a6934f018325f4f167d45f37264043eb85761618e",
+  "revision": "sha256:89aa295136caf31a8829c22134ae49a4ce8e617df949e9ec6063c3578228216a",
   "sourceSubpath": "plugins/databricks-metric-view/skills/databricks-metric-view",
   "importedAt": "2026-08-29",
   "license": "MIT",
@@ -9,26 +9,26 @@
     "path": "LICENSE",
     "sha256": "6a55b8c7a99caa57772f912232a4cd9e5e148dfc453776e0b1c0998734947b78"
   },
-  "contentSha256": "691a45c3686c1d6ab658a72a6934f018325f4f167d45f37264043eb85761618e",
+  "contentSha256": "89aa295136caf31a8829c22134ae49a4ce8e617df949e9ec6063c3578228216a",
   "files": {
-    "SKILL.md": "006e20835069c540f7014686fa0e8874dcdf3c184912b6ae405cccbc40a80098",
     "agents/openai.yaml": "df89e016788a4bdc6feb177d954506ecf560f2e0663bae2319a744c97f62770b",
-    "references/authoring.md": "b07cf328d01264294bda68152020dcbbc0616b6fa1e9ebb5b65509bc1864b345",
+    "references/authoring.md": "f6873b2ef609712ad42761eac8763d9d5a60fcd8ac3f8a4b77fb66a4f9d0f4fd",
     "references/deployment.md": "081ea51659896462f56890f891939c5c8abdcd97b51cefaba740d03dc0c9f635",
-    "references/live-discovery-operations.md": "9815fa90cc491179ffd46fc62da028d6a582ad0d9291a4830a189877cc7871f3",
-    "references/semantic-discovery.md": "27304d9ae57f7df34eb7f96fefee6adf8a287c1eead3e3af2331f7e46be91905",
-    "references/validation-levels.md": "64f534a564526cdf97674141672e0d2d1ae45188c33a7f40d050874fc8820d9f",
-    "references/yaml-reference.md": "9f8a0611ddca46c7f03c241bd9e9065a569c6c77246ca068e719fbbe0053335f"
+    "references/live-discovery-operations.md": "95a46695889c721f045d799135ecc4bff5bacb5ccd5ec200b8328a609fa677e9",
+    "references/semantic-discovery.md": "7d75a046f8f7e3c5fe24b2c190d55d6c7cb4f23367002c9156ad7401e40218ed",
+    "references/validation-levels.md": "325a095dd0f64cd42370deba7fe13105607dc73fbd3d4fa7eb7bacdf2671a12c",
+    "references/yaml-reference.md": "231adb19ebdcfd4beac6b974e19e1c7853cdf75732d3241f523c8f47ed9ca001",
+    "SKILL.md": "fd3eb2d10839832c054e5e9402d207075665d45c67ef79fcdf5343df4506e543"
   },
   "fileModes": {
-    "SKILL.md": false,
     "agents/openai.yaml": false,
     "references/authoring.md": false,
     "references/deployment.md": false,
     "references/live-discovery-operations.md": false,
     "references/semantic-discovery.md": false,
     "references/validation-levels.md": false,
-    "references/yaml-reference.md": false
+    "references/yaml-reference.md": false,
+    "SKILL.md": false
   },
   "transformations": [
     "Created natively for this Agent Plugin"

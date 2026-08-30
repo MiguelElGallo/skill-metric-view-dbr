@@ -5,6 +5,7 @@ The answer depends on what you asked the skill to do.
 | Result | What it proves | What it does not prove |
 | --- | --- | --- |
 | Checked draft | The YAML parses and follows the supported definition rules for the supplied compute context. | Real objects, permissions, data, SQL resolution, or Databricks acceptance. |
+| Semantic-quality suggestions reviewed | Durable descriptions and display names are present where expected, applicable formats were considered, and deterministic synonym issues were surfaced. | Correct, approved, complete, or current business meaning. |
 | Semantic inventory | The proposed elements are traceable to business-approved authority, governed metadata, observations, or inference. | That metadata is current, inferred meaning is correct, or samples represent all data. |
 | Live metadata review | The selected profile can see the inspected objects, columns, comments, constraints, and compute context. | Full analyzer acceptance or business correctness. |
 | Bounded sample review | The returned sample has the reported values, nulls, and relationship shape. | Full-table uniqueness, cardinality, or business meaning. |
@@ -13,7 +14,7 @@ The answer depends on what you asked the skill to do.
 | Smoke query passed | The created view can return the tested fields and measures. | Untested measures, edge cases, or truthful join-cardinality assumptions. |
 | Trusted SQL reconciled | Comparable queries matched for the stated snapshot, timezone, parameters, filters, groups, null rules, and tolerances. | Untested cases or future source changes. |
 
-The skill reports these results separately so a fast draft is never mistaken for a deployed and tested view.
+The skill reports these results separately so a fast draft is never mistaken for a semantically ready, deployed, and tested view. Semantic readiness additionally requires question coverage, a complete source-column include/exclude/defer ledger, measure contracts, relationship status, approved metadata, and visible gaps.
 
 For a checked draft, ask:
 

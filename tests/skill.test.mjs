@@ -58,6 +58,73 @@ test("skill makes semantic discovery evidence-based and privacy-bounded", async 
   assert.match(discovery, /rely\.at_most_one_match.*sampled evidence alone/s);
 });
 
+test("skill requires production semantic coverage without inventing terminology", async () => {
+  const skill = await readFile(skillPath, "utf8");
+  const authoring = await readFile(
+    join(
+      root,
+      "plugins",
+      "databricks-metric-view",
+      "skills",
+      "databricks-metric-view",
+      "references",
+      "authoring.md",
+    ),
+    "utf8",
+  );
+  const discovery = await readFile(
+    join(
+      root,
+      "plugins",
+      "databricks-metric-view",
+      "skills",
+      "databricks-metric-view",
+      "references",
+      "semantic-discovery.md",
+    ),
+    "utf8",
+  );
+
+  assert.match(skill, /named columns and measures as required seeds, not an exhaustive/);
+  assert.match(skill, /names a selected profile.*real assets/s);
+  assert.match(skill, /`only` limits outputs; it never waives/);
+  assert.match(skill, /word `minimal` alone does not select this route/);
+  assert.match(skill, /complete metadata-only schema for every bounded source table/);
+  assert.match(skill, /every source column as include, exclude, or defer/);
+  assert.match(skill, /smallest semantically complete view/);
+  assert.match(skill, /A request to deploy does not approve invented semantics/);
+  assert.match(skill, /`use your best judgment`.*drafting proposals, not marking them approved/s);
+  assert.match(skill, /keep it in the suggestion inventory and out of deployable YAML/s);
+  assert.match(skill, /semantic_quality: true/);
+  assert.match(authoring, /semantic readiness review/i);
+  assert.match(authoring, /small view can be semantically complete/);
+  assert.match(authoring, /before YAML for every production-intended real-asset creation/);
+  assert.match(discovery, /Read existing table comments and every column comment before drafting descriptions/);
+  assert.match(discovery, /value.*yaml_path.*evidence_class.*locator.*owner\/currentness.*status/s);
+  assert.match(discovery, /A request to deploy is not approval to invent/);
+});
+
+test("skill carries over relevant full Snowflake-skill workflow lessons", async () => {
+  const skill = await readFile(skillPath, "utf8");
+  const authoring = await readFile(
+    join(
+      root,
+      "plugins",
+      "databricks-metric-view",
+      "skills",
+      "databricks-metric-view",
+      "references",
+      "authoring.md",
+    ),
+    "utf8",
+  );
+
+  assert.match(skill, /reproduce the same question or query.*smallest semantic-layer gap/s);
+  assert.match(skill, /retrieved customer metric-view definitions.*out of the repository/s);
+  assert.match(skill, /Prefer explicit fields, comments, display names, synonyms, formats, measures, filters, and joins over broad AI instructions/);
+  assert.match(authoring, /Keep trusted question\/SQL-pair changes separate from structural repairs/);
+});
+
 test("skill includes executable and failure-aware live discovery operations", async () => {
   const liveOperations = await readFile(
     join(

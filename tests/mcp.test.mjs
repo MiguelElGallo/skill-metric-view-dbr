@@ -46,7 +46,7 @@ test("copied package with spaces exposes and invokes the MCP tool", async () => 
     assert.deepEqual(tools.tools.map((tool) => tool.name), ["check_databricks_metric_view_yaml"]);
     const call = await client.callTool({
       name: "check_databricks_metric_view_yaml",
-      arguments: { yaml, compute: "sql-warehouse" },
+      arguments: { yaml, compute: "sql-warehouse", semantic_quality: true },
     });
     assert.equal(call.isError, false);
     assert.equal(call.structuredContent.valid, true);
@@ -54,7 +54,14 @@ test("copied package with spaces exposes and invokes the MCP tool", async () => 
       compute: "sql-warehouse",
       runtimeVersion: null,
       allowUnknownFields: false,
+      semanticQuality: true,
     });
+    assert.equal(
+      call.structuredContent.diagnostics.some(
+        (item) => item.category === "semantic-quality" && item.severity === "info",
+      ),
+      true,
+    );
     assert.match(call.structuredContent.disclaimer, /not validated/);
 
     const fileCall = await client.callTool({
@@ -65,6 +72,13 @@ test("copied package with spaces exposes and invokes the MCP tool", async () => 
     });
     assert.equal(fileCall.isError, false);
     assert.equal(fileCall.structuredContent.valid, true);
+    assert.equal(Object.hasOwn(fileCall.structuredContent.context, "semanticQuality"), false);
+    assert.equal(
+      fileCall.structuredContent.diagnostics.some(
+        (item) => item.category === "semantic-quality",
+      ),
+      false,
+    );
 
     const invalidCall = await client.callTool({
       name: "check_databricks_metric_view_yaml",
@@ -111,11 +125,16 @@ test("VS Code compatibility package launches the portable MCP checker", async ()
     assert.deepEqual(tools.tools.map((tool) => tool.name), ["check_databricks_metric_view_yaml"]);
     const call = await client.callTool({
       name: "check_databricks_metric_view_yaml",
-      arguments: { yaml, compute: "sql-warehouse" },
+      arguments: { yaml, compute: "sql-warehouse", semantic_quality: true },
     });
     assert.equal(call.isError, false);
     assert.equal(call.structuredContent.valid, true);
-    assert.equal(call.structuredContent.checkerVersion, "0.0.3");
+    assert.equal(call.structuredContent.checkerVersion, "0.0.4");
+    assert.equal(call.structuredContent.context.semanticQuality, true);
+    assert.equal(
+      call.structuredContent.diagnostics.some((item) => item.category === "semantic-quality"),
+      true,
+    );
   } finally {
     await client.close();
     await rm(temporary, { recursive: true, force: true });

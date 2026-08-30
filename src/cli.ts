@@ -14,6 +14,7 @@ Options:
   --compute <sql-warehouse|dbr>     Target compute compatibility context
   --runtime <major.minor>           DBR version; implies --compute dbr
   --allow-unknown                   Downgrade unsupported fields to warnings
+  --semantic-quality               Add non-blocking semantic metadata suggestions
   -h, --help                        Show this help
 
 Exit codes: 0 local checks passed, 1 validation failed, 2 usage or I/O failure.
@@ -44,6 +45,7 @@ function parseArguments(args: string[]): ParsedArguments | undefined {
   let compute: ComputeTarget | undefined;
   let runtimeVersion: string | undefined;
   let allowUnknownFields = false;
+  let semanticQuality = false;
   for (let index = 2; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === "--format") {
@@ -63,6 +65,8 @@ function parseArguments(args: string[]): ParsedArguments | undefined {
       index += 1;
     } else if (argument === "--allow-unknown") {
       allowUnknownFields = true;
+    } else if (argument === "--semantic-quality") {
+      semanticQuality = true;
     } else {
       usageError(`Unknown option: ${argument}`);
     }
@@ -75,6 +79,7 @@ function parseArguments(args: string[]): ParsedArguments | undefined {
     ...(compute ? { compute } : {}),
     ...(runtimeVersion ? { runtimeVersion } : {}),
     ...(allowUnknownFields ? { allowUnknownFields: true } : {}),
+    ...(semanticQuality ? { semanticQuality: true } : {}),
     sourceName: file === "-" ? "<stdin>" : resolve(file),
   };
   return { file, format, options };
@@ -84,7 +89,7 @@ function textResult(result: ValidationResult): string {
   const status = result.valid ? "PASS" : "FAIL";
   const lines = [
     `${status} ${result.source} (${result.errorCount} errors, ${result.warningCount} warnings, ${result.infoCount} info)`,
-    `Context: compute=${result.context.compute ?? "unspecified"}, runtime=${result.context.runtimeVersion ?? "unspecified"}, allowUnknownFields=${result.context.allowUnknownFields}`,
+    `Context: compute=${result.context.compute ?? "unspecified"}, runtime=${result.context.runtimeVersion ?? "unspecified"}, allowUnknownFields=${result.context.allowUnknownFields}${result.context.semanticQuality ? ", semanticQuality=true" : ""}`,
   ];
   for (const diagnostic of result.diagnostics) {
     lines.push(

@@ -97,7 +97,11 @@ class ValidationContext {
     severity: Severity,
     path: PathPart[],
     message: string,
-    extras: { suggestion?: string; docsUrl?: string } = {},
+    extras: {
+      suggestion?: string;
+      docsUrl?: string;
+      category?: "semantic-quality";
+    } = {},
   ): void {
     let nodePath = path;
     let node = this.document.getIn(nodePath, true) as { range?: [number, number, number] } | undefined;
@@ -115,6 +119,7 @@ class ValidationContext {
       message,
       ...(extras.suggestion ? { suggestion: extras.suggestion } : {}),
       ...(extras.docsUrl ? { docsUrl: extras.docsUrl } : {}),
+      ...(extras.category ? { category: extras.category } : {}),
       checkLevel: "local",
     });
   }
@@ -253,6 +258,21 @@ function stringList(
   return strings;
 }
 
+function metadataString(
+  ctx: ValidationContext,
+  value: unknown,
+  path: PathPart[],
+  label: string,
+): string | undefined {
+  if (typeof value !== "string") {
+    ctx.add("STRING_REQUIRED", "error", path, `${label} must be a string.`, {
+      docsUrl: METADATA_DOCS,
+    });
+    return undefined;
+  }
+  return value;
+}
+
 function validateMetadata(
   ctx: ValidationContext,
   item: JsonObject,
@@ -268,10 +288,10 @@ function validateMetadata(
     });
   }
   if (Object.hasOwn(item, "comment")) {
-    requireString(ctx, item.comment, [...path, "comment"], "comment");
+    metadataString(ctx, item.comment, [...path, "comment"], "comment");
   }
   if (Object.hasOwn(item, "display_name")) {
-    const displayName = requireString(
+    const displayName = metadataString(
       ctx,
       item.display_name,
       [...path, "display_name"],
@@ -288,7 +308,16 @@ function validateMetadata(
     }
   }
   if (Object.hasOwn(item, "synonyms")) {
-    const synonyms = stringList(ctx, item.synonyms, [...path, "synonyms"], "synonyms", false);
+    const entries = requireArray(
+      ctx,
+      item.synonyms,
+      [...path, "synonyms"],
+      "synonyms",
+      false,
+    );
+    const synonyms = entries?.map((entry, index) =>
+      metadataString(ctx, entry, [...path, "synonyms", index], "synonym"),
+    );
     if (synonyms && synonyms.length > 10) {
       ctx.add(
         "TOO_MANY_SYNONYMS",
@@ -299,7 +328,7 @@ function validateMetadata(
       );
     }
     synonyms?.forEach((synonym, index) => {
-      if (synonym.length > 255) {
+      if (synonym !== undefined && synonym.length > 255) {
         ctx.add(
           "SYNONYM_TOO_LONG",
           "error",
@@ -948,13 +977,27 @@ function validateJoins(
             { docsUrl: YAML_DOCS },
           );
         } else if (rely.at_most_one_match === true) {
-          ctx.add(
-            "JOIN_RELY_DATA_NOT_VALIDATED",
-            "warning",
-            [...itemPath, "rely", "at_most_one_match"],
-            "Databricks does not validate this promise at runtime; duplicate matches can silently produce incorrect measures.",
-            { docsUrl: YAML_DOCS },
-          );
+          if (cardinality === "one_to_many") {
+            ctx.add(
+              "CONTRADICTORY_JOIN_RELY",
+              "error",
+              [...itemPath, "rely", "at_most_one_match"],
+              "rely.at_most_one_match: true promises a many-to-one relationship and contradicts cardinality: one_to_many.",
+              {
+                suggestion:
+                  "Remove the RELY promise for a one-to-many fact branch, or correct the cardinality only when the relationship is genuinely many-to-one.",
+                docsUrl: YAML_DOCS,
+              },
+            );
+          } else {
+            ctx.add(
+              "JOIN_RELY_DATA_NOT_VALIDATED",
+              "warning",
+              [...itemPath, "rely", "at_most_one_match"],
+              "Databricks does not validate this many-to-one promise at runtime; duplicate matches can silently produce incorrect measures.",
+              { docsUrl: YAML_DOCS },
+            );
+          }
         }
       }
     }
@@ -1241,6 +1284,299 @@ function validateVersion(ctx: ValidationContext, root: JsonObject): void {
   ctx.version = raw;
 }
 
+interface SemanticOutput {
+  item: JsonObject;
+  kind: "field" | "measure";
+  name: string;
+  path: PathPart[];
+}
+
+interface SynonymOccurrence {
+  output: SemanticOutput;
+  index: number;
+  path: PathPart[];
+  value: string;
+}
+
+function normalizeSemanticTerm(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
+}
+
+function isPlaceholderMetadata(value: string): boolean {
+  return /\b(?:todo|tbd|fixme|placeholder|replace[ _-]?me)\b/i.test(value);
+}
+
+function semanticOutputs(root: JsonObject): SemanticOutput[] {
+  const outputs: SemanticOutput[] = [];
+  for (const [collection, kind] of [
+    ["fields", "field"],
+    ["dimensions", "field"],
+    ["measures", "measure"],
+  ] as const) {
+    const entries = root[collection];
+    if (!Array.isArray(entries)) continue;
+    entries.forEach((entry, index) => {
+      if (!isObject(entry) || !nonBlank(entry.name) || !nonBlank(entry.expr)) return;
+      if (isWildcardExpression(entry.expr)) return;
+      outputs.push({ item: entry, kind, name: entry.name, path: [collection, index] });
+    });
+  }
+  return outputs;
+}
+
+function addSemanticInfo(
+  ctx: ValidationContext,
+  code: string,
+  path: PathPart[],
+  message: string,
+  suggestion?: string,
+): void {
+  ctx.add(code, "info", path, message, {
+    ...(suggestion ? { suggestion } : {}),
+    docsUrl: METADATA_DOCS,
+    category: "semantic-quality",
+  });
+}
+
+function validateSemanticQuality(
+  ctx: ValidationContext,
+  root: JsonObject,
+): void {
+  if (ctx.version !== "1.1") {
+    addSemanticInfo(
+      ctx,
+      "SEMANTIC_QUALITY_AGENT_METADATA_UNAVAILABLE",
+      ["version"],
+      "Agent metadata suggestions are not applicable to YAML 0.1 definitions.",
+      "Use YAML 1.1 only when the target supports it; do not add unsupported metadata to this definition.",
+    );
+    return;
+  }
+  if (ctx.options.compute === "dbr" && ctx.runtime && runtimeLessThan(ctx.runtime, "17.3")) {
+    addSemanticInfo(
+      ctx,
+      "SEMANTIC_QUALITY_AGENT_METADATA_UNAVAILABLE",
+      ["version"],
+      `Agent metadata requires Databricks Runtime 17.3+; target runtime is ${ctx.options.runtimeVersion}.`,
+      "Keep the definition compatible with the selected runtime or target DBR 17.3+ before adding agent metadata.",
+    );
+    return;
+  }
+
+  if (!Object.hasOwn(root, "comment")) {
+    addSemanticInfo(
+      ctx,
+      "SEMANTIC_QUALITY_VIEW_PURPOSE_MISSING",
+      ["comment"],
+      "The metric view has no durable business-purpose comment.",
+      "Add an approved description of the view's scope, grain, and intended questions; keep proposed terminology outside deployable YAML until approved.",
+    );
+  } else if (typeof root.comment === "string") {
+    if (root.comment.trim().length === 0) {
+      addSemanticInfo(
+        ctx,
+        "SEMANTIC_QUALITY_EMPTY_METADATA",
+        ["comment"],
+        "The metric-view comment is blank.",
+        "Replace it with an approved business-purpose description or omit it while approval is pending.",
+      );
+    } else if (isPlaceholderMetadata(root.comment)) {
+      addSemanticInfo(
+        ctx,
+        "SEMANTIC_QUALITY_PLACEHOLDER_METADATA",
+        ["comment"],
+        "The metric-view comment appears to contain placeholder text.",
+        "Resolve the placeholder from authoritative evidence before deployment.",
+      );
+    }
+  }
+
+  const outputs = semanticOutputs(root);
+  const outputTerms = new Map<string, SemanticOutput[]>();
+  const synonymOccurrences = new Map<string, SynonymOccurrence[]>();
+  const measuresWithoutFormat: SemanticOutput[] = [];
+
+  const registerOutputTerm = (term: string, output: SemanticOutput): void => {
+    const normalized = normalizeSemanticTerm(term);
+    if (!normalized) return;
+    const current = outputTerms.get(normalized) ?? [];
+    current.push(output);
+    outputTerms.set(normalized, current);
+  };
+
+  for (const output of outputs) {
+    registerOutputTerm(output.name, output);
+    if (typeof output.item.display_name === "string" && output.item.display_name.trim()) {
+      registerOutputTerm(output.item.display_name, output);
+    }
+
+    if (!Object.hasOwn(output.item, "comment")) {
+      addSemanticInfo(
+        ctx,
+        "SEMANTIC_QUALITY_COMMENT_MISSING",
+        [...output.path, "comment"],
+        `${output.kind} ${JSON.stringify(output.name)} has no durable business description.`,
+        "Reuse an applicable owned definition, or keep a provenance-bearing suggestion outside deployable YAML until approved.",
+      );
+    } else if (typeof output.item.comment === "string") {
+      if (output.item.comment.trim().length === 0) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_EMPTY_METADATA",
+          [...output.path, "comment"],
+          `${output.kind} ${JSON.stringify(output.name)} has a blank comment.`,
+          "Add an approved description or omit the property while approval is pending.",
+        );
+      } else if (isPlaceholderMetadata(output.item.comment)) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_PLACEHOLDER_METADATA",
+          [...output.path, "comment"],
+          `${output.kind} ${JSON.stringify(output.name)} has placeholder text in its comment.`,
+          "Resolve the placeholder from authoritative evidence before deployment.",
+        );
+      }
+    }
+
+    if (!Object.hasOwn(output.item, "display_name")) {
+      addSemanticInfo(
+        ctx,
+        "SEMANTIC_QUALITY_DISPLAY_NAME_MISSING",
+        [...output.path, "display_name"],
+        `${output.kind} ${JSON.stringify(output.name)} has no user-facing display name.`,
+        "Add a mechanical human-readable label when it adds no new meaning, or use approved business terminology.",
+      );
+    } else if (typeof output.item.display_name === "string") {
+      if (output.item.display_name.trim().length === 0) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_EMPTY_METADATA",
+          [...output.path, "display_name"],
+          `${output.kind} ${JSON.stringify(output.name)} has a blank display name.`,
+          "Add a useful label or omit the property.",
+        );
+      } else if (isPlaceholderMetadata(output.item.display_name)) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_PLACEHOLDER_METADATA",
+          [...output.path, "display_name"],
+          `${output.kind} ${JSON.stringify(output.name)} has placeholder text in its display name.`,
+          "Resolve the placeholder before deployment.",
+        );
+      }
+    }
+
+    if (output.kind === "measure" && !Object.hasOwn(output.item, "format")) {
+      measuresWithoutFormat.push(output);
+    }
+
+    if (!Array.isArray(output.item.synonyms)) continue;
+    if (output.item.synonyms.length === 0) {
+      addSemanticInfo(
+        ctx,
+        "SEMANTIC_QUALITY_EMPTY_METADATA",
+        [...output.path, "synonyms"],
+        `${output.kind} ${JSON.stringify(output.name)} has an empty synonyms list.`,
+        "Remove the empty list; add synonyms only when genuine approved alternative terms exist.",
+      );
+      continue;
+    }
+    const ownTerms = new Set(
+      [output.name, typeof output.item.display_name === "string" ? output.item.display_name : ""]
+        .map(normalizeSemanticTerm)
+        .filter(Boolean),
+    );
+    const seen = new Set<string>();
+    output.item.synonyms.forEach((value, index) => {
+      if (typeof value !== "string") return;
+      const synonymPath = [...output.path, "synonyms", index];
+      const normalized = normalizeSemanticTerm(value);
+      if (!normalized) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_EMPTY_METADATA",
+          synonymPath,
+          `${output.kind} ${JSON.stringify(output.name)} has a blank synonym.`,
+          "Remove the blank entry.",
+        );
+        return;
+      }
+      if (isPlaceholderMetadata(value)) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_PLACEHOLDER_METADATA",
+          synonymPath,
+          `Synonym ${JSON.stringify(value)} appears to be placeholder text.`,
+          "Replace it only with an approved term, or remove it.",
+        );
+      }
+      if (seen.has(normalized)) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_DUPLICATE_SYNONYM",
+          synonymPath,
+          `Synonym ${JSON.stringify(value)} duplicates another synonym on ${JSON.stringify(output.name)} after case and whitespace normalization.`,
+          "Keep one spelling of the approved term.",
+        );
+      } else {
+        seen.add(normalized);
+      }
+      if (ownTerms.has(normalized)) {
+        addSemanticInfo(
+          ctx,
+          "SEMANTIC_QUALITY_REDUNDANT_SYNONYM",
+          synonymPath,
+          `Synonym ${JSON.stringify(value)} repeats the output name or display name for ${JSON.stringify(output.name)}.`,
+          "Remove the redundant synonym.",
+        );
+      }
+      const occurrences = synonymOccurrences.get(normalized) ?? [];
+      occurrences.push({ output, index, path: synonymPath, value });
+      synonymOccurrences.set(normalized, occurrences);
+    });
+  }
+
+  if (measuresWithoutFormat.length > 0) {
+    const names = measuresWithoutFormat.map((output) => output.name).join(", ");
+    addSemanticInfo(
+      ctx,
+      "SEMANTIC_QUALITY_FORMAT_REVIEW",
+      [...measuresWithoutFormat[0]!.path, "format"],
+      `${measuresWithoutFormat.length} measure(s) have no explicit format: ${names}.`,
+      "Review whether an approved number, currency, percentage, byte, date, or date-time format is useful; do not infer units or currency.",
+    );
+  }
+
+  const ambiguousPaths = new Set<string>();
+  const addAmbiguous = (occurrence: SynonymOccurrence, reason: string): void => {
+    const key = formatPath(occurrence.path);
+    if (ambiguousPaths.has(key)) return;
+    ambiguousPaths.add(key);
+    addSemanticInfo(
+      ctx,
+      "SEMANTIC_QUALITY_AMBIGUOUS_SYNONYM",
+      occurrence.path,
+      `Synonym ${JSON.stringify(occurrence.value)} on ${JSON.stringify(occurrence.output.name)} ${reason}.`,
+      "Keep one unambiguous approved meaning, or remove the alias before using the view with Genie.",
+    );
+  };
+
+  for (const [term, occurrences] of synonymOccurrences) {
+    const canonicalOwners = outputTerms.get(term) ?? [];
+    for (const occurrence of occurrences) {
+      if (canonicalOwners.some((owner) => owner.path.join(".") !== occurrence.output.path.join("."))) {
+        addAmbiguous(occurrence, "matches another output's name or display name");
+      }
+    }
+    const distinctOwners = new Set(occurrences.map((occurrence) => formatPath(occurrence.output.path)));
+    if (distinctOwners.size > 1) {
+      for (const occurrence of occurrences) {
+        addAmbiguous(occurrence, "is also assigned to another output");
+      }
+    }
+  }
+}
+
 function syntaxResult(
   diagnostics: Diagnostic[],
   options: CheckOptions,
@@ -1257,6 +1593,7 @@ function syntaxResult(
       compute: options.compute ?? null,
       runtimeVersion: options.runtimeVersion ?? null,
       allowUnknownFields: options.allowUnknownFields ?? false,
+      ...(options.semanticQuality ? { semanticQuality: true as const } : {}),
     },
     valid: errors === 0,
     errorCount: errors,
@@ -1430,6 +1767,10 @@ export function validateMetricViewYaml(
         { docsUrl: MATERIALIZATION_DOCS },
       );
     }
+  }
+
+  if (options.semanticQuality && !context.diagnostics.some((item) => item.severity === "error")) {
+    validateSemanticQuality(context, root);
   }
 
   return syntaxResult(context.diagnostics, options);

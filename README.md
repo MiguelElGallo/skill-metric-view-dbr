@@ -22,24 +22,27 @@ Open or create the project folder where you want the definition saved. Then open
 ~~~text
 Use the databricks-metric-view skill.
 
-Create a Databricks metric view over samples.tpch.orders.
-- Use o_orderstatus as order_status.
-- Add order_count as COUNT(*).
-- Add total_order_value as SUM(o_totalprice).
-- Target a SQL warehouse.
-- Save it as orders-metric-view.yml.
+With profile <PROFILE>, design a production-ready Databricks metric view over
+<catalog.schema.table> for these business questions: <questions>.
 
-Check the result, explain what you created, and do not deploy it.
+Metadata only: do not read table rows.
+1. Read the complete table and column metadata, including existing comments.
+2. Classify every source column as include, exclude, or defer, with a reason.
+3. Show the source grain, keys, question coverage, measure contracts, and join evidence.
+4. Reuse current approved terminology. If descriptions, display names, formats,
+   or synonyms are missing, draft sourced suggestions outside the YAML and ask me
+   before adding new business meaning.
+5. After approval, save <file.yml>, check it, and do not deploy it.
 ~~~
 
-That is the complete workflow for a draft. The skill writes the definition, checks it automatically, and tells you what would still need a real Databricks workspace. You do not need a separate validation command.
+That is the complete workflow. The skill studies the source semantics, asks once about meaningful gaps, writes the approved definition, checks it automatically, and tells you what remains unproven. You do not need a separate validation command.
 
 ## What can you ask?
 
 | Goal | Example |
 | --- | --- |
-| Create a metric view | “Create a metric view from this table and these business measures. Do not deploy.” |
-| Improve an existing definition | “Review the attached metric-view YAML, fix its errors, and preserve unrelated content.” |
+| Create a metric view | “Create a metric view from this table. Review every column, enrich every included field and measure, ask before inventing terminology, and do not deploy.” |
+| Improve an existing definition | “Review the attached metric-view YAML for semantic coverage and correctness. Preserve unrelated content and keep unapproved suggestions outside YAML.” |
 | Discover semantics from real data | “With profile `PROFILE`, analyze `catalog.schema.table` for this business question. Use the bounded sampling budget in the discovery guide. Show the evidence-backed fields and measures before writing YAML. Do not deploy.” |
 | Deploy and verify | “With profile `PROFILE` and warehouse `WAREHOUSE_ID`, create `catalog.schema.view`. Create only; stop if it exists. Read it back and test the important measures.” |
 

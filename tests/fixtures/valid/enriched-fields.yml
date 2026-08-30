@@ -1,0 +1,38 @@
+version: 1.1
+source: samples.tpch.orders
+comment: Order volume and value for the documented local test scope.
+fields:
+  - name: order_date
+    expr: o_orderdate
+    comment: Date when the order was placed.
+    display_name: Order Date
+    format:
+      type: date
+      date_format: year_month_day
+    synonyms: [order time, date of order]
+  - name: order_status
+    expr: o_orderstatus
+    comment: Raw fulfillment status recorded for the order.
+    display_name: Order Status
+    synonyms: [status, fulfillment state]
+measures:
+  - name: order_count
+    expr: COUNT(DISTINCT o_orderkey)
+    comment: Number of distinct orders identified by the order key.
+    display_name: Order Count
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 0
+    synonyms: [number of orders, order volume]
+  - name: total_order_value
+    expr: SUM(o_totalprice)
+    comment: Sum of the stored order total value.
+    display_name: Total Order Value
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 2
+    synonyms: [combined order value, summed order value]

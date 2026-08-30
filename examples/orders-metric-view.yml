@@ -1,19 +1,82 @@
 version: 1.1
 source: samples.tpch.orders
-comment: Order counts and stored order values grouped by source attributes.
+comment: Educational TPC-H order metrics using semantics documented by Databricks.
 
 fields:
+  - name: order_date
+    expr: o_orderdate
+    comment: Date when the order was placed.
+    display_name: Order Date
+    format:
+      type: date
+      date_format: year_month_day
+      leading_zeros: true
+    synonyms:
+      - order time
+      - date of order
   - name: order_status
-    expr: o_orderstatus
-    comment: Status code stored on the order.
-  - name: order_priority
-    expr: o_orderpriority
-    comment: Priority value stored on the order.
+    expr: |
+      CASE
+        WHEN o_orderstatus = 'O' THEN 'Open'
+        WHEN o_orderstatus = 'P' THEN 'Processing'
+        WHEN o_orderstatus = 'F' THEN 'Fulfilled'
+      END
+    comment: Fulfillment status of the order using the mapping documented in the Databricks TPC-H tutorial.
+    display_name: Order Status
+    synonyms:
+      - status
+      - fulfillment status
 
 measures:
   - name: order_count
-    expr: COUNT(*)
-    comment: Number of orders.
-  - name: total_order_value
+    expr: COUNT(DISTINCT o_orderkey)
+    comment: Number of distinct orders identified by the order key.
+    display_name: Order Count
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 0
+    synonyms:
+      - number of orders
+      - order volume
+  - name: total_revenue
     expr: SUM(o_totalprice)
-    comment: Sum of the stored order total.
+    comment: Total value of orders, presented as USD for this documented TPC-H tutorial example.
+    display_name: Total Revenue
+    format:
+      type: currency
+      currency_code: USD
+      decimal_places:
+        type: exact
+        places: 2
+      abbreviation: compact
+    synonyms:
+      - revenue
+      - total sales
+  - name: unique_customers
+    expr: COUNT(DISTINCT o_custkey)
+    comment: Number of distinct customers that placed orders.
+    display_name: Unique Customers
+    format:
+      type: number
+      decimal_places:
+        type: exact
+        places: 0
+      abbreviation: compact
+    synonyms:
+      - distinct customers
+      - customer count
+  - name: average_order_value
+    expr: MEASURE(total_revenue) / MEASURE(order_count)
+    comment: Average order value calculated as total revenue divided by distinct order count.
+    display_name: Average Order Value
+    format:
+      type: currency
+      currency_code: USD
+      decimal_places:
+        type: exact
+        places: 2
+    synonyms:
+      - AOV
+      - average revenue per order
