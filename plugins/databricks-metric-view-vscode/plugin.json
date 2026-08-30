@@ -1,6 +1,6 @@
 {
   "name": "databricks-metric-view",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Author and preflight-check Databricks Unity Catalog metric-view YAML before submitting it to Databricks.",
   "author": {
     "name": "MiguelElGallo",

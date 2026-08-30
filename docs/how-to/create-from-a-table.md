@@ -38,10 +38,13 @@ Do not inspect query history, dashboards, or Genie assets.
 
 Before writing YAML:
 1. check for overlapping metric views in the target schema;
-2. state each table's likely purpose and one-row grain;
-3. show candidate keys, relationships, fields, measures, and filters;
-4. label each item business-authoritative, governed metadata, observed, or inferred;
-5. list the business questions that still need my decision.
+2. retrieve every column and existing comment for every source table;
+3. state each table's likely purpose and one-row grain;
+4. classify every source column as include, exclude, or defer, with a reason;
+5. show question coverage, candidate keys, relationships, fields, measures, filters, and complete measure contracts;
+6. label each item business-authoritative, governed metadata, observed, or inferred;
+7. reuse applicable current terminology, but keep inferred comments, display names, formats, synonyms, formulas, and code labels outside YAML until I approve them;
+8. list the business questions that still need my decision.
 
 Save the approved draft as <file name>, check it, and do not deploy.
 ~~~
@@ -73,16 +76,17 @@ You can also attach a SQL file, KPI sheet, dashboard export, or data dictionary.
 Before YAML, expect a summary containing:
 
 - source tables, their likely roles, and row grain;
+- a complete include/exclude/defer ledger for every bounded source column;
 - declared and tested keys;
 - candidate relationships and whether cardinality was tested;
 - fields users can group or filter by;
 - atomic and composed measures, with units and filters;
-- useful descriptions, display names, and genuine synonyms;
+- useful comments, display names, justified formats, and genuine synonyms, with approval status;
 - sensitive exclusions;
 - existing-view overlap;
 - evidence, confidence, and open questions.
 
-A sampled value distribution is observed evidence. It is not proof of business meaning or full-table cardinality. A catalog comment or declared key is governed metadata, not automatically an approved business definition.
+A sampled value distribution is observed evidence. It is not proof of business meaning or full-table cardinality. A catalog comment or declared key is governed metadata, not automatically an approved business definition. Copying a comment to a transformed field or new metric is a new assertion unless it still describes exactly the same meaning.
 
 ## Resolve only meaningful questions
 
@@ -102,9 +106,10 @@ The skill should batch these questions. It should not stop for routine formattin
 After you approve the semantic choices:
 
 ~~~text
-Use the approved inventory to create the smallest useful metric view.
+Use the approved inventory to create the smallest semantically complete metric view for the agreed questions.
 Define atomic measures first, then compose reusable ratios with MEASURE(...).
-Preserve evidence-backed comments, display names, and synonyms.
+Add approved comments and display names to every explicit field and measure.
+Add justified formats and only genuine, unambiguous synonyms.
 Save and check the complete definition. Do not deploy.
 ~~~
 

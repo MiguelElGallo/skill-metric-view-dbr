@@ -194,8 +194,10 @@ const versions = new Set([
   catalog.marketplace.version,
   copilot.metadata?.version,
 ]);
-if (versions.size !== 1 || !versions.has("0.0.3")) {
-  throw new Error(`Package, plugins, catalog, and generated marketplace versions must all be 0.0.3: ${[...versions].join(", ")}`);
+if (versions.size !== 1 || !versions.has(manifest.version)) {
+  throw new Error(
+    `Package, plugins, catalog, and generated marketplace versions must all match ${manifest.version}: ${[...versions].join(", ")}`,
+  );
 }
 if (copilot.plugins[0]?.source !== "./plugins/databricks-metric-view-vscode") {
   throw new Error("Copilot marketplace source is incorrect");

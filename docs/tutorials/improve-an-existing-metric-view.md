@@ -49,7 +49,9 @@ Now try a review-only request:
 
 ~~~text
 Review the updated file for unclear business descriptions.
-Suggest improvements, but do not edit the file.
+Review the view purpose and every field and measure for comments, display names,
+applicable formats, and genuine synonyms. Keep inferred terminology outside YAML,
+show its evidence and target path, and ask before editing the file.
 ~~~
 
 This separates objective definition problems from business wording that needs your judgment.

@@ -21,7 +21,7 @@ const toolDefinition = {
   name: TOOL_NAME,
   title: "Check Databricks metric-view YAML",
   description:
-    "Run fast local YAML 1.2, structure, cross-field, and optional runtime-compatibility checks before Databricks submission. A local pass does not validate SQL expressions, catalog objects, permissions, data, or cardinality.",
+    "Run fast local YAML 1.2, structure, cross-field, and optional runtime-compatibility checks before Databricks submission. Optional semantic-quality suggestions report metadata gaps without changing validity. A local pass does not validate business meaning, SQL expressions, catalog objects, permissions, data, or cardinality.",
   inputSchema: {
     type: "object",
     properties: {
@@ -43,6 +43,12 @@ const toolDefinition = {
         type: "boolean",
         default: false,
         description: "Downgrade checker-unsupported fields to warnings after documentation review.",
+      },
+      semantic_quality: {
+        type: "boolean",
+        default: false,
+        description:
+          "Add non-blocking suggestions for semantic metadata presence and deterministic synonym hygiene.",
       },
     },
     additionalProperties: false,
@@ -68,7 +74,14 @@ function write(message: JsonObject): void {
 
 function validateToolArguments(value: unknown): JsonObject {
   if (!isObject(value)) throw new Error("Tool arguments must be an object");
-  const allowed = new Set(["yaml", "file", "compute", "runtime_version", "allow_unknown_fields"]);
+  const allowed = new Set([
+    "yaml",
+    "file",
+    "compute",
+    "runtime_version",
+    "allow_unknown_fields",
+    "semantic_quality",
+  ]);
   const unknown = Object.keys(value).filter((key) => !allowed.has(key));
   if (unknown.length > 0) throw new Error(`Unknown tool arguments: ${unknown.join(", ")}`);
   const hasYaml = typeof value.yaml === "string" && value.yaml.length > 0;
@@ -86,6 +99,9 @@ function validateToolArguments(value: unknown): JsonObject {
   if (value.allow_unknown_fields !== undefined && typeof value.allow_unknown_fields !== "boolean") {
     throw new Error("allow_unknown_fields must be a boolean");
   }
+  if (value.semantic_quality !== undefined && typeof value.semantic_quality !== "boolean") {
+    throw new Error("semantic_quality must be a boolean");
+  }
   if (value.compute === "sql-warehouse" && value.runtime_version !== undefined) {
     throw new Error("runtime_version cannot be combined with compute=sql-warehouse");
   }
@@ -102,6 +118,7 @@ async function callTool(argumentsValue: unknown): Promise<JsonObject> {
     ...(compute ? { compute } : {}),
     ...(runtimeVersion ? { runtimeVersion } : {}),
     ...(args.allow_unknown_fields === true ? { allowUnknownFields: true } : {}),
+    ...(args.semantic_quality === true ? { semanticQuality: true } : {}),
     sourceName: typeof args.file === "string" ? args.file : "<tool-input>",
   };
   const result = validateMetricViewYaml(yaml, options);

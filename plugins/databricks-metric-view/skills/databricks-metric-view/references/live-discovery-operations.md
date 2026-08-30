@@ -139,6 +139,8 @@ WHERE table_schema = '<SCHEMA>'
 ORDER BY table_name, ordinal_position
 ~~~
 
+The column query must return every column for every bounded table. Do not add a `column_name IN (...)` filter merely because the request named a few fields. Build the include/exclude/defer ledger from this complete metadata-only result before selecting outputs. Read comments first; if they are missing, record a gap rather than inserting invented business terminology into YAML.
+
 Declared keys and constraints:
 
 ~~~sql

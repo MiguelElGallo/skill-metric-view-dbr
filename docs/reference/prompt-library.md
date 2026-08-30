@@ -22,9 +22,11 @@ and allow 30 seconds per query. Do not exceed an estimated 1 GB scan per sample;
 if the estimate is unavailable, stop and ask. Keep aggregates on the sampled relation.
 Do not inspect query history, dashboards, or Genie assets.
 
-Before YAML, show table roles and grain, keys, relationships, candidate fields and measures,
-existing-view overlap, evidence provenance, and open business questions.
-Mark every name-based inference as a proposal.
+Before YAML, retrieve every source column and existing comment. Show table roles and grain,
+an include/exclude/defer decision for every column, question coverage, complete measure contracts,
+keys, relationships, candidate fields and measures, existing-view overlap, evidence provenance,
+and open business questions. Reuse applicable current terminology. Keep every inferred comment,
+display name, format, synonym, formula, code label, and relationship as an external proposal.
 After I approve the semantics, create and check the draft. Do not deploy.
 ~~~
 
@@ -35,7 +37,9 @@ Use the databricks-metric-view skill.
 With profile <PROFILE>, inspect metadata for <catalog.schema.table>.
 Propose a metric view for <business question>.
 Do not read rows or run data-profiling queries.
-Label inferred definitions as proposals.
+Read the complete source schema and existing comments. Classify every column as include,
+exclude, or defer. Label inferred definitions and terminology as external proposals and
+ask before adding them to deployable YAML.
 Target <SQL warehouse or Databricks Runtime version>. Save as <file>.
 Do not create or update anything in Databricks.
 ~~~
@@ -45,7 +49,9 @@ Do not create or update anything in Databricks.
 ~~~text
 Use the databricks-metric-view skill.
 Create a metric view over <catalog.schema.table> for <business question>.
-Use <columns> as fields and <approved expressions> as measures.
+Treat this as the complete authoritative offline specification: <approved fields, measures,
+comments, display names, formats, synonyms, grain, filters, units, and exclusions>.
+If any business-critical meaning is missing, propose it outside YAML and ask before editing.
 Target <SQL warehouse or Databricks Runtime version>.
 Save it as <file>.
 Check it, explain assumptions, and do not connect or deploy.
@@ -56,7 +62,8 @@ Check it, explain assumptions, and do not connect or deploy.
 ~~~text
 Use the databricks-metric-view skill to review the attached YAML.
 Target <SQL warehouse or Databricks Runtime version>.
-Check source grain, measure units and filters, descriptions, synonyms, joins, and overlap.
+Check question coverage, source grain, the column coverage ledger when source metadata is
+available, measure contracts, comments, display names, formats, synonyms, joins, and overlap.
 Separate definition errors, business questions, compatibility concerns, and live-only checks.
 Do not edit, connect, or deploy.
 ~~~
@@ -80,6 +87,7 @@ Target: <catalog.schema.view>
 Create only; stop if the target exists.
 Check first, create, read back, and test the important measures.
 Reconcile against the attached trusted SQL.
+Do not treat deployment authorization as approval to invent missing semantics.
 ~~~
 
 ## Update one exact target

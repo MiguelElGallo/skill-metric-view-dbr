@@ -1,6 +1,6 @@
 # Supported YAML and feature matrix
 
-This is a checker routing reference, not a replacement for Databricks documentation. Rules were verified against current Databricks documentation on 2026-08-29.
+This is a checker routing reference, not a replacement for Databricks documentation. Rules were verified against current Databricks documentation on 2026-08-30.
 
 ## Top level
 
@@ -30,6 +30,12 @@ This is a checker routing reference, not a replacement for Databricks documentat
 
 SQL warehouses run an automatically updated Databricks SQL version. Do not pretend a user-selected DBR number applies to them.
 
+## Agent metadata
+
+Databricks documents `comment`, `display_name`, `format`, and `synonyms` as optional YAML properties. `display_name` is limited to 255 characters. Each field or measure can have at most 10 synonyms, each limited to 255 characters. Formats use the documented number, currency, percentage, byte, date, or date-time shapes. Wildcard entries cannot carry per-output metadata.
+
+Schema optionality is not the same as semantic readiness. For production use, review comments and display names for every explicit output, formats where applicable, and genuine consumer vocabulary for synonyms. The checker's opt-in semantic-quality mode reports presence and deterministic hygiene only; blank metadata is not treated as a documented Databricks analyzer error.
+
 ## Locally enforced relationships
 
 - Joins require exactly one of `on` or `using`.
@@ -42,7 +48,7 @@ SQL warehouses run an automatically updated Databricks SQL version. Do not prete
 - Dated window ranges and offsets use day, month, or year units. DBR 19 also supports unitless numeric ranges and offsets over consecutive integer order fields; index density and grain still require live data validation.
 - Parameterized metric views cannot be materialized.
 - Materialization uses `mode: relaxed`, unique entries, valid aggregated/unaggregated combinations, and `dimensions` for field references.
-- `rely.at_most_one_match` is valid for both `many_to_one` and `one_to_many`; its promise is directional and its data truth is not runtime-validated, so the checker warns for either cardinality.
+- `rely.at_most_one_match: true` is valid only for `many_to_one`. Its promise is not runtime-validated, so the checker warns on a compatible join and rejects a contradictory `one_to_many` declaration.
 
 Current sources:
 

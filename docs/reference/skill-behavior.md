@@ -1,10 +1,11 @@
 # Skill behavior
 
-The `databricks-metric-view` skill supports five workflows.
+The `databricks-metric-view` skill supports six workflows.
 
 | Workflow | Databricks access | Databricks changes |
 | --- | --- | --- |
 | Create a draft from supplied requirements | Not needed | None |
+| Prove installation or analyzer transport with an explicit non-production smoke | Depends on proof target | Creates only the explicitly authorized smoke target |
 | Review or edit an existing definition | Not needed | None |
 | Discover source semantics from metadata | Selected profile, metadata only | None |
 | Discover value shape and relationships | Selected profile, authorized bounded samples | None |
@@ -41,13 +42,15 @@ The skill:
 
 1. identifies the business question and source grain;
 2. checks for overlapping metric views when a target schema is in scope;
-3. inventories metadata before reading rows;
+3. retrieves the complete metadata-only schema for every bounded table and classifies every source column as include, exclude, or defer;
 4. samples only within the authorized scope;
 5. labels semantic evidence as business-authoritative, governed metadata, observed, or inferred, with locator and currentness;
-6. proposes fields, measures, joins, filters, descriptions, and synonyms with provenance;
-7. preserves unrelated content during focused edits;
-8. checks every generated or edited definition automatically;
-9. separates semantic evidence, local checks, Databricks acceptance, smoke tests, and business reconciliation.
+6. reads existing comments and business vocabulary before proposing fields, measures, joins, filters, descriptions, display names, formats, and synonyms;
+7. keeps inferred terminology in an external approval inventory instead of deployable YAML;
+8. records question coverage, measure contracts, relationship status, exclusions, and gaps before declaring production readiness;
+9. preserves unrelated content during focused edits;
+10. checks every generated or edited definition automatically, with non-blocking semantic-quality suggestions for creation and full audits;
+11. separates semantic evidence, semantic readiness, local checks, Databricks acceptance, smoke tests, and business reconciliation.
 
 ## Safety boundaries
 
@@ -60,6 +63,8 @@ The skill does not:
 - silently treat an unavailable or empty metadata, dashboard, or Genie fetch as evidence that nothing exists;
 - expose sensitive raw values by default;
 - invent source columns, business definitions, relationships, code labels, or cardinality;
+- treat deploy authorization as approval for invented terminology;
+- copy a source comment to a transformed field or measure without confirming that it still describes the result;
 - describe a sampled result as full-table truth;
 - describe a local result as acceptance by Databricks;
 - create or update a Databricks object without an explicit request;

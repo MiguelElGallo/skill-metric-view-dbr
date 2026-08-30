@@ -14,16 +14,27 @@ Open VS Code Chat in Agent mode and paste:
 Use the databricks-metric-view skill.
 
 Create a Databricks metric view over samples.tpch.orders.
-- Use o_orderstatus as a field named order_status.
-- Add order_count as COUNT(*).
-- Add total_order_value as SUM(o_totalprice).
+- This is an offline tutorial. Treat the following list as the complete approved scope.
+- Business purpose: analyze order volume and value by order date and documented status.
+- Grain: one row per order, identified by o_orderkey.
+- order_date uses o_orderdate; comment "Date when the order was placed";
+  display name "Order Date"; synonyms "order time" and "date of order".
+- order_status maps O to Open, P to Processing, and F to Fulfilled, following
+  the Databricks TPC-H tutorial; comment "Fulfillment status of the order";
+  display name "Order Status"; synonyms "status" and "fulfillment status".
+- order_count is COUNT(DISTINCT o_orderkey); comment "Number of distinct orders";
+  display name "Order Count"; number format with zero decimal places;
+  synonyms "number of orders" and "order volume".
+- total_revenue is SUM(o_totalprice); for this tutorial, approve the Databricks
+  example's USD presentation; comment "Total value of orders";
+  display name "Total Revenue"; synonyms "revenue" and "total sales".
 - Use YAML version 1.1 for a SQL warehouse.
 - Save the result as orders-metric-view.yml.
 
 Check the complete definition. Do not connect to Databricks and do not deploy.
 ~~~
 
-The source columns and calculations are explicit, so the skill does not have to guess their meaning.
+The source columns, calculations, descriptions, vocabulary, and tutorial assumptions are explicit, so the skill does not have to invent their meaning. In a real project, it would read existing comments and propose missing terminology for approval.
 
 ## Review the result
 
@@ -31,6 +42,7 @@ The skill should:
 
 - create `orders-metric-view.yml`;
 - explain the fields and measures it added;
+- show that every explicit field and measure has approved semantic metadata;
 - run its fast checks automatically;
 - distinguish a locally checked draft from a definition accepted by Databricks.
 
@@ -42,11 +54,12 @@ Continue in the same chat:
 
 ~~~text
 Add average_order_value as AVG(o_totalprice).
-Give it a clear display name and comment.
+Before editing YAML, propose its formula contract, comment, display name, USD format,
+and genuine synonyms for approval. Do not assume deploy authorization is semantic approval.
 Keep everything else unchanged and check the complete definition again.
 ~~~
 
-The skill should make the focused change, preserve the rest of the file, and report the new result.
+After you approve the proposal, the skill should make the focused change, preserve the rest of the file, and report the new result.
 
 ## Choose the next step
 

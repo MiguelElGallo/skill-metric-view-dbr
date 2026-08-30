@@ -1,6 +1,6 @@
 {
   "name": "databricks-metric-view-plugin-workspace",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,8 +9,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:check": "node scripts/build.mjs --check",
-    "generate": "node scripts/generate-vscode-plugin.mjs && node scripts/generate-marketplaces.mjs",
-    "generate:check": "node scripts/generate-vscode-plugin.mjs --check && node scripts/generate-marketplaces.mjs --check",
+    "generate": "node scripts/update-skill-provenance.mjs && node scripts/generate-vscode-plugin.mjs && node scripts/generate-marketplaces.mjs",
+    "generate:check": "node scripts/update-skill-provenance.mjs --check && node scripts/generate-vscode-plugin.mjs --check && node scripts/generate-marketplaces.mjs --check",
     "typecheck": "tsc --noEmit",
     "test": "node --test",
     "validate:docs": "node scripts/validate-docs.mjs",

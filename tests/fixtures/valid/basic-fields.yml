@@ -8,9 +8,9 @@ fields:
     format:
       type: date
       date_format: year_month_day
-  - name: customer_segment
+  - name: order_priority
     expr: o_orderpriority
-    synonyms: [priority, segment]
+    synonyms: [priority, order urgency]
 measures:
   - name: order_count
     expr: COUNT(*)
@@ -18,8 +18,7 @@ measures:
   - name: total_revenue
     expr: SUM(o_totalprice)
     format:
-      type: currency
-      currency_code: EUR
+      type: number
       decimal_places:
         type: exact
         places: 2

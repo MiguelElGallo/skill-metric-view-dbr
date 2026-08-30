@@ -8,6 +8,8 @@ The bundled checker verifies YAML parsing, duplicate keys, documented field shap
 
 It does not validate SQL expressions, objects, permissions, source data, join cardinality, parameter castability, or Databricks analyzer behavior. Keep its disclaimer in the result.
 
+For creation, semantic improvement, or full semantic audits, enable semantic-quality suggestions. They report missing durable comments and display names, measures that deserve a format review, placeholder metadata, and deterministic synonym problems. They are informational, do not change `valid` or the CLI exit status, and cannot determine whether terminology is approved, a format is correct, a synonym is useful, or the agreed questions are complete.
+
 ## Level 2: semantic evidence
 
 Metadata, authorized samples, governed definitions, trusted SQL, and observed usage can justify why a field, measure, join, filter, name, or synonym belongs.
@@ -43,6 +45,7 @@ Record the exact query, parameters, result summary, and remaining coverage. Avoi
 - **Error:** deterministic local failure or a supplied DBR target below a documented minimum.
 - **Warning:** a material risk needing SQL, metadata, data, business, or analyzer evidence.
 - **Info:** a feature requirement or limitation when target context is unknown or uses an auto-updated SQL warehouse.
+- **Semantic-quality info:** an opt-in metadata presence or synonym-hygiene suggestion. Resolve it through the evidence and approval workflow; never treat it as proof of business meaning.
 - **Unsupported field:** the checker does not know the field. Default preflight treats it as an error without claiming Databricks rejects it; compatibility mode can downgrade it after documentation review.
 
 Current references:
