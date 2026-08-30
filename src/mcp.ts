@@ -24,11 +24,16 @@ const toolDefinition = {
     "Run fast local YAML 1.2, structure, cross-field, and optional runtime-compatibility checks before Databricks submission. Optional semantic-quality suggestions report metadata gaps without changing validity. A local pass does not validate business meaning, SQL expressions, catalog objects, permissions, data, or cardinality.",
   inputSchema: {
     type: "object",
+    description:
+      "Provide exactly one of yaml or file. The server enforces this mutual-exclusion rule at runtime for clients that only support a basic object schema.",
     properties: {
-      yaml: { type: "string", description: "Metric-view YAML text to check." },
+      yaml: {
+        type: "string",
+        description: "Metric-view YAML text to check. Do not combine with file.",
+      },
       file: {
         type: "string",
-        description: "Absolute local YAML file path to check instead of passing text.",
+        description: "Absolute local YAML file path to check. Do not combine with yaml.",
       },
       compute: {
         type: "string",
@@ -52,7 +57,6 @@ const toolDefinition = {
       },
     },
     additionalProperties: false,
-    oneOf: [{ required: ["yaml"] }, { required: ["file"] }],
   },
 };
 
