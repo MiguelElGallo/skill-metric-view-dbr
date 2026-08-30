@@ -7,13 +7,14 @@
       "email": "60221874+MiguelElGallo@users.noreply.github.com"
     },
     "description": "Portable skills and tools for Databricks metric-view YAML.",
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   "plugins": [
     {
       "name": "databricks-metric-view",
       "category": "Developer Tools",
-      "codexCompatibility": true
+      "codexCompatibility": true,
+      "copilotSource": "./plugins/databricks-metric-view-vscode"
     }
   ]
 }

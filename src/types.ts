@@ -1,4 +1,4 @@
-export const CHECKER_VERSION = "0.0.2";
+export const CHECKER_VERSION = "0.0.3";
 export const RULES_VERIFIED_ON = "2026-08-29";
 
 export type Severity = "error" | "warning" | "info";

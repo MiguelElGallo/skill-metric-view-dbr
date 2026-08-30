@@ -78,3 +78,46 @@ test("copied package with spaces exposes and invokes the MCP tool", async () => 
     await rm(temporary, { recursive: true, force: true });
   }
 });
+
+test("VS Code compatibility package launches the portable MCP checker", async () => {
+  const temporary = await mkdtemp(join(tmpdir(), "metric vscode plugin ü "));
+  const vscodeRoot = join(temporary, "standalone package with spaces");
+  await cp(join(root, "plugins", "databricks-metric-view-vscode"), vscodeRoot, {
+    recursive: true,
+  });
+  const manifest = JSON.parse(await readFile(join(vscodeRoot, "plugin.json"), "utf8"));
+  assert.equal(manifest.mcpServers, "./.mcp.json");
+  const mcp = JSON.parse(await readFile(join(vscodeRoot, ".mcp.json"), "utf8"));
+  const declared = mcp.mcpServers["databricks-metric-view-checker"];
+  const expand = (value) => value.replaceAll("${PLUGIN_ROOT}", vscodeRoot);
+  const yaml = await readFile(join(root, "tests", "fixtures", "valid", "basic-fields.yml"), "utf8");
+  const environment = { ...process.env, PLUGIN_ROOT: vscodeRoot };
+  environment.DATABRICKS_METRIC_VIEW_SKIP_SYSTEM_NODE = "1";
+  environment.DATABRICKS_METRIC_VIEW_NODE =
+    process.platform === "win32" ? join(vscodeRoot, "plugin.json") : "/bin/false";
+  environment.DATABRICKS_METRIC_VIEW_HOST_RUNTIME = process.execPath;
+  if (process.platform !== "win32") environment.PATH = "/usr/bin:/bin";
+  const transport = new StdioClientTransport({
+    command: join(vscodeRoot, declared.command.slice(2)),
+    args: declared.args.map(expand),
+    cwd: expand(declared.cwd),
+    env: environment,
+    stderr: "pipe",
+  });
+  const client = new Client({ name: "vscode-compatibility-test", version: "1.0.0" });
+  try {
+    await client.connect(transport);
+    const tools = await client.listTools();
+    assert.deepEqual(tools.tools.map((tool) => tool.name), ["check_databricks_metric_view_yaml"]);
+    const call = await client.callTool({
+      name: "check_databricks_metric_view_yaml",
+      arguments: { yaml, compute: "sql-warehouse" },
+    });
+    assert.equal(call.isError, false);
+    assert.equal(call.structuredContent.valid, true);
+    assert.equal(call.structuredContent.checkerVersion, "0.0.3");
+  } finally {
+    await client.close();
+    await rm(temporary, { recursive: true, force: true });
+  }
+});

@@ -10,6 +10,7 @@ import { normalizedTextFileSha256 } from "./provenance.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pluginRoot = join(root, "plugins", "databricks-metric-view");
+const vscodePluginRoot = join(root, "plugins", "databricks-metric-view-vscode");
 
 async function json(path) {
   return JSON.parse(await readFile(path, "utf8"));
@@ -76,6 +77,8 @@ const pluginSchema = await json(join(root, "schemas", "agent-plugins", "1.0.0", 
 const mcpSchema = await json(join(root, "schemas", "agent-plugins", "1.0.0", "mcp.schema.json"));
 const manifest = await json(join(pluginRoot, "plugin.json"));
 const mcp = await json(join(pluginRoot, "mcp.json"));
+const vscodeManifest = await json(join(vscodePluginRoot, "plugin.json"));
+const vscodeMcp = await json(join(vscodePluginRoot, ".mcp.json"));
 const packageManifest = await json(join(root, "package.json"));
 const catalog = await json(join(root, "catalog", "plugins.json"));
 
@@ -143,19 +146,58 @@ await Promise.all([
   readFile(join(pluginRoot, "THIRD_PARTY_NOTICES.md")),
 ]);
 await assertNoSymlinks(pluginRoot);
+await assertNoSymlinks(vscodePluginRoot);
+
+if (Object.hasOwn(vscodeManifest, "$schema")) {
+  throw new Error("VS Code compatibility manifest must use the Copilot format");
+}
+for (const field of ["name", "version", "description"]) {
+  if (vscodeManifest[field] !== manifest[field]) {
+    throw new Error(`VS Code compatibility manifest ${field} differs from the portable plugin`);
+  }
+}
+const vscodeSkills = vscodeManifest.skills;
+if (
+  vscodeSkills?.exclusive !== true ||
+  vscodeSkills.paths?.length !== 1 ||
+  vscodeSkills.paths[0] !== "./skills"
+) {
+  throw new Error("VS Code compatibility skill path must target its bundled skill copy");
+}
+if (vscodeManifest.mcpServers !== "./.mcp.json") {
+  throw new Error("VS Code compatibility manifest must declare its bundled MCP configuration");
+}
+if (JSON.stringify(vscodeMcp) !== JSON.stringify(mcp)) {
+  throw new Error("VS Code compatibility MCP configuration differs from the portable plugin");
+}
+const vscodeServer = vscodeMcp.mcpServers?.["databricks-metric-view-checker"];
+if (
+  vscodeServer?.type !== "stdio" ||
+  vscodeServer.command !== "./bin/checker.cmd" ||
+  vscodeServer.args?.length !== 1 ||
+  vscodeServer.args[0] !== "mcp" ||
+  vscodeServer.cwd !== "${PLUGIN_ROOT}"
+) {
+  throw new Error("VS Code compatibility MCP definition is stale");
+}
+const expandVscodeRoot = (value) => value.replaceAll("${PLUGIN_ROOT}", vscodePluginRoot);
+if (resolve(expandVscodeRoot(vscodeServer.cwd), vscodeServer.command) !== join(vscodePluginRoot, "bin", "checker.cmd")) {
+  throw new Error("VS Code compatibility MCP command does not resolve to its bundled launcher");
+}
 
 const copilot = await json(join(root, ".github", "plugin", "marketplace.json"));
 const codex = await json(join(root, ".agents", "plugins", "marketplace.json"));
 const versions = new Set([
   packageManifest.version,
   manifest.version,
+  vscodeManifest.version,
   catalog.marketplace.version,
   copilot.metadata?.version,
 ]);
-if (versions.size !== 1 || !versions.has("0.0.2")) {
-  throw new Error(`Package, plugin, catalog, and generated marketplace versions must all be 0.0.2: ${[...versions].join(", ")}`);
+if (versions.size !== 1 || !versions.has("0.0.3")) {
+  throw new Error(`Package, plugins, catalog, and generated marketplace versions must all be 0.0.3: ${[...versions].join(", ")}`);
 }
-if (copilot.plugins[0]?.source !== "./plugins/databricks-metric-view") {
+if (copilot.plugins[0]?.source !== "./plugins/databricks-metric-view-vscode") {
   throw new Error("Copilot marketplace source is incorrect");
 }
 if (codex.plugins[0]?.source?.path !== "./plugins/databricks-metric-view") {
